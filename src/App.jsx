@@ -1,9 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import SignIn from './components/SignIn';
-import Dashboard from './components/Dashboard';
-import Upload from './components/Upload';
-import Career from './components/Career';
-import CreateAccount from './components/CreateAccount';
+import SignIn from './components/SignIn.jsx';
+import Dashboard from './components/Dashboard.jsx';
+import Upload from './components/Upload.jsx';
+import Career from './components/Career.jsx';
+import CreateAccount from './components/CreateAccount.jsx';
 import './App.css';
 
 function App() {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const SignIn: React.FC = () => {
+const SignIn = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,8 +15,8 @@ const SignIn: React.FC = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      localStorage.setItem("username", username); // ✅ store username
-      navigate('/quiz'); // ✅ go to questionnaire
+      localStorage.setItem("username", username);
+      navigate('/quiz');
     }, 1200);
   };
 

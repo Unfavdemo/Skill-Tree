@@ -7,9 +7,9 @@ const latestSkills = [
   'Event Handling',
 ];
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState<string | null>(null);
+  const [username, setUsername] = useState(null);
 
   useEffect(() => {
     const storedUsername = localStorage.getItem("username");
@@ -88,7 +88,6 @@ const Dashboard: React.FC = () => {
             <div className="skill-node child">useEffect</div>
           </div>
         </div>
-
       </main>
 
       {/* Latest skills at the bottom */}

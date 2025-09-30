@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Career: React.FC = () => {
+const Career = () => {
   const navigate = useNavigate();
-  const [answers, setAnswers] = useState<{ [key: string]: string }>({});
+  const [answers, setAnswers] = useState({});
 
   const questions = [
     {
@@ -23,7 +23,7 @@ const Career: React.FC = () => {
     },
   ];
 
-  const handleSelect = (qId: string, option: string) => {
+  const handleSelect = (qId, option) => {
     setAnswers(prev => ({ ...prev, [qId]: option }));
   };
 

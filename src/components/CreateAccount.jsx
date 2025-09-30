@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const CreateAccount: React.FC = () => {
+const CreateAccount = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,10 +23,9 @@ const CreateAccount: React.FC = () => {
     setTimeout(() => {
       setLoading(false);
       alert('Account created successfully!');
-      // ✅ store username + email
       localStorage.setItem("username", username);
       localStorage.setItem("userEmail", email);
-      navigate('/quiz'); // ✅ go straight to questionnaire
+      navigate('/quiz');
     }, 1500);
   };
 

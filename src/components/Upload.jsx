@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 const Upload = () => {
   const navigate = useNavigate();
 
-  const handleFile = (file: File) => {
+  const handleFile = (file) => {
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
       alert('File size must be less than 10MB');
@@ -18,7 +18,6 @@ const Upload = () => {
       alert('Please upload a PDF, DOC, or DOCX file');
       return;
     }
-    // Simulate upload and navigate
     setTimeout(() => {
       navigate('/dashboard');
     }, 2000);
