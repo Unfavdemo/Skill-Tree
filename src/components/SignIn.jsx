@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const SignIn = () => {
   const [username, setUsername] = useState('');
@@ -45,13 +45,9 @@ const SignIn = () => {
           {loading ? 'Signing In...' : 'Sign In'}
         </button>
 
-        <a
-          onClick={() => navigate('/create-account')}
-          className="auth-link"
-          style={{ cursor: 'pointer' }}
-        >
+        <Link to="/create-account" className="auth-link">
           Create account
-        </a>
+        </Link>
 
         <div className="auth-footer">
           © 2025 SkillTree. Start building your skills today.
