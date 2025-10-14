@@ -1,39 +1,47 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// src/components/Career.jsx
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useUser } from "../Context/UserContext";
 
 const Career = () => {
   const navigate = useNavigate();
+  const { user, setUser } = useUser();
   const [answers, setAnswers] = useState({});
 
   const questions = [
-    {
-      id: "interest",
-      question: "Which area interests you the most?",
-      options: ["Technology", "Creative Arts", "Healthcare", "Business", "Education"],
-    },
-    {
-      id: "style",
-      question: "What work style do you prefer?",
-      options: ["Independent", "Team-based", "Hands-on", "Analytical", "Leadership"],
-    },
-    {
-      id: "goal",
-      question: "What motivates you in a career?",
-      options: ["Helping others", "Innovation", "Financial growth", "Creativity", "Stability"],
-    },
+    { id: "interest", question: "Which area interests you the most?", options: ["Technology", "Creative Arts", "Healthcare", "Business", "Education"] },
+    { id: "style", question: "What work style do you prefer?", options: ["Independent", "Team-based", "Hands-on", "Analytical", "Leadership"] },
+    { id: "goal", question: "What motivates you in a career?", options: ["Helping others", "Innovation", "Financial growth", "Creativity", "Stability"] },
   ];
 
-  const handleSelect = (qId, option) => {
-    setAnswers(prev => ({ ...prev, [qId]: option }));
-  };
+  const handleSelect = (qId, option) => setAnswers(prev => ({ ...prev, [qId]: option }));
 
   const handleSubmit = () => {
+    // debug: confirm handler runs
+    console.log("Career.handleSubmit called - answers:", answers);
+
     if (Object.keys(answers).length < questions.length) {
       alert("Please answer all questions!");
       return;
     }
-    console.log("Career quiz results:", answers);
-    navigate("/upload");
+
+    const updatedUser = {
+      ...(user || {}),
+      username: (user && user.username) || "GuestUser",
+      careerAnswers: answers,
+      resumeUploaded: !!(user && user.resumeUploaded),
+      skills: (user && user.skills) || [],
+      lessons: (user && user.lessons) || [],
+    };
+
+    console.log("Career - updating user to:", updatedUser);
+
+    // setUser from context will persist to localStorage via UserContext
+    setUser(updatedUser);
+
+    // navigation: go to dashboard if resume exists, else upload
+    if (updatedUser.resumeUploaded) navigate("/dashboard");
+    else navigate("/upload");
   };
 
   return (
@@ -60,7 +68,12 @@ const Career = () => {
           </div>
         ))}
 
-        <button className="auth-btn" onClick={handleSubmit}>
+        <button
+          type="button"
+          className="auth-btn"
+          onClick={handleSubmit}
+          aria-label="Continue to next step"
+        >
           Continue
         </button>
       </div>

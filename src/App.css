@@ -1,4 +1,6 @@
-/* Global body */
+/* ============================
+   Global Styles
+   ============================ */
 body {
   background: linear-gradient(135deg, #24243e 0%, #302b63 50%, #0f0c29 100%);
   color: #eee;
@@ -9,18 +11,21 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  box-sizing: border-box;
 }
 
-/* Main dashboard wrapper */
+/* ============================
+   Dashboard Layout
+   ============================ */
 .dashboard-container {
   width: 100%;
-  max-width: 1280px;  /* ✅ fits nicely on laptops */
-  min-height: 100vh;  /* ✅ fills screen height */
+  max-width: 1280px;              /* fits nicely on laptops */
+  min-height: 100vh;              /* fills screen height */
   margin: 0 auto;
   padding: 16px;
   display: grid;
-  grid-template-columns: minmax(250px, 1fr) 3fr; /* sidebar auto-shrinks */
-  grid-template-rows: auto 1fr auto; /* profile | main | latest */
+  grid-template-columns: minmax(250px, 1fr) 3fr; /* left sidebar | main */
+  grid-template-rows: auto 1fr auto;             /* profile | main | footer */
   gap: 16px;
   box-sizing: border-box;
 }
@@ -28,7 +33,7 @@ body {
 /* Profile header */
 .profile-pic-section {
   grid-column: 1 / span 2;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 14px;
   padding: 16px;
   text-align: center;
@@ -36,19 +41,18 @@ body {
   position: relative;
 }
 
-/* Lessons sidebar */
+/* Sidebar lessons / previous lessons */
 .sidebar-left {
   grid-column: 1 / 2;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow-y: auto; /* ✅ scroll if too many lessons */
+  overflow-y: auto;  /* scroll if too many lessons */
   max-height: 70vh;
 }
 
-/* Skill cards */
 .skill-card {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 12px;
   color: #fff;
@@ -56,26 +60,31 @@ body {
   flex-direction: column;
   justify-content: space-between;
 }
+
 .skill-title {
   font-size: 14px;
   font-weight: 500;
 }
+
 .progress-bar {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   height: 8px;
   margin: 8px 0;
-  width: 100%; /* ✅ scales automatically */
+  width: 100%;
 }
+
 .progress-fill {
   background: #4caf50;
   height: 100%;
   border-radius: 6px;
 }
+
 .progress-text {
   font-size: 12px;
   text-align: right;
 }
+
 .prev-lesson-label {
   font-size: 11px;
   color: #bbb;
@@ -83,38 +92,39 @@ body {
   text-align: center;
 }
 
-/* Skill tree center */
+/* Skill tree (center panel) */
 .skill-tree-center {
   grid-column: 2 / 3;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 16px;
-  min-height: 50vh; /* ✅ flexible height */
+  min-height: 50vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
-.tree-header, .tree-footer {
+
+.tree-header,
+.tree-footer {
   display: flex;
   justify-content: space-between;
   font-weight: 600;
 }
 
-/* ✅ Auto-layout tree */
 .tree-visual {
   flex: 1;
   margin: 16px 0;
-  border: 1px dashed rgba(255,255,255,0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   display: flex;
-  flex-direction: column; /* vertical stacking */
+  flex-direction: column;  /* vertical stacking */
   justify-content: space-evenly;
   padding: 20px;
 }
 
 .tree-level {
   display: flex;
-  justify-content: space-around; /* spread nodes horizontally */
+  justify-content: space-around; /* spread horizontally */
   align-items: center;
   flex: 1;
 }
@@ -124,61 +134,58 @@ body {
   color: #fff;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   font-size: 13px;
   min-width: 80px;
   text-align: center;
 }
+
 .skill-node.root {
   background: #4caf50;
   font-weight: bold;
 }
+
 .skill-node.child {
   background: #3f3d56;
 }
 
-/* Latest skills */
+/* Latest skills section */
 .latest-skills-card {
   grid-column: 1 / span 2;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 14px;
 }
+
 .latest-title {
   font-size: 18px;
   margin-bottom: 10px;
 }
+
 .section-title {
   font-size: 14px;
   margin-bottom: 8px;
 }
+
 .skill-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
 .skill-list li {
   margin: 6px 0;
 }
+
 .more-skills {
   font-size: 12px;
   color: #bbb;
   margin-top: 10px;
 }
 
-/* Responsive tweaks */
-@media (max-width: 1024px) {
-  .dashboard-container {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto;
-    max-width: 95%;
-  }
-  .skill-node {
-    font-size: 11px;
-    padding: 6px 8px;
-  }
-}
-/* Auth pages */
+/* ============================
+   Auth Pages
+   ============================ */
 .auth-wrapper {
   width: 100%;
   height: 100vh;
@@ -188,14 +195,14 @@ body {
 }
 
 .auth-box {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   padding: 30px;
   border-radius: 16px;
   width: 100%;
   max-width: 420px;
   text-align: center;
   color: #fff;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .auth-title {
@@ -211,7 +218,7 @@ body {
 }
 
 .auth-input {
-  width: 100%; /* ✅ aligns to box width */
+  width: 100%;
   padding: 12px;
   margin: 8px 0;
   border-radius: 8px;
@@ -221,7 +228,7 @@ body {
 }
 
 .auth-btn {
-  width: 100%; /* ✅ aligns to box width */
+  width: 100%;
   padding: 12px;
   margin-top: 12px;
   border-radius: 8px;
@@ -232,6 +239,7 @@ body {
   cursor: pointer;
   transition: background 0.3s ease;
 }
+
 .auth-btn:hover {
   background: #45a049;
 }
@@ -243,6 +251,7 @@ body {
   font-size: 13px;
   text-decoration: none;
 }
+
 .auth-link:hover {
   text-decoration: underline;
 }
@@ -253,27 +262,49 @@ body {
   color: #aaa;
 }
 
-/* Upload page drop zone */
+/* ============================
+   Upload Page
+   ============================ */
 .drop-zone {
   margin: 20px 0;
   padding: 30px;
-  border: 2px dashed rgba(255,255,255,0.3);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.3s ease;
   text-align: center;
-  width: 100%; /* ✅ aligns to box width */
+  width: 100%;
   box-sizing: border-box;
 }
+
 .drop-zone.dragover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
+
 .upload-icon {
   font-size: 32px;
   margin-bottom: 10px;
 }
+
 .upload-hint {
   font-size: 12px;
   color: #bbb;
   margin-top: 8px;
 }
+
+/* ============================
+   Responsive Tweaks
+   ============================ */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+    max-width: 95%;
+  }
+
+  .skill-node {
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+}
+

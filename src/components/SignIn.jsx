@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useUser } from "../Context/UserContext";
 
 const SignIn = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { setUser } = useUser();
   const navigate = useNavigate();
 
   const signIn = () => {
@@ -13,11 +15,29 @@ const SignIn = () => {
       return;
     }
     setLoading(true);
+
     setTimeout(() => {
       setLoading(false);
-      localStorage.setItem("username", username);
+
+      let stored = localStorage.getItem("user");
+      let user = stored ? JSON.parse(stored) : null;
+
+      if (!user || user.username !== username) {
+        user = {
+          username,
+          email: "",
+          resumeUploaded: false,
+          skills: [],
+          lessons: [],     // ✅ ensure lessons array exists
+          careerAnswers: {},
+        };
+      }
+
+      localStorage.setItem("user", JSON.stringify(user));
+      setUser(user);
+
       navigate('/quiz');
-    }, 1200);
+    }, 1000);
   };
 
   return (

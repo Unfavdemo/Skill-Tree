@@ -1,74 +1,102 @@
+// src/components/Upload.jsx
 import React, { useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import { useUser } from "../Context/UserContext";
 
 const Upload = () => {
   const navigate = useNavigate();
+  const { user, setUser } = useUser();
+  const [fileName, setFileName] = useState("");
 
-  const handleFile = (file) => {
-    if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB');
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFileName(file.name);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      setFileName(file.name);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleUploadContinue = () => {
+    if (!fileName) {
+      alert("Please upload your resume first!");
       return;
     }
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-    if (!allowedTypes.includes(file.type)) {
-      alert('Please upload a PDF, DOC, or DOCX file');
-      return;
-    }
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 2000);
+
+    const updatedUser = {
+      ...(user || {}),
+      resumeUploaded: true,
+      skills: user?.skills || [],
+      lessons: user?.lessons || [],
+      careerAnswers: user?.careerAnswers || {},
+      username: user?.username || "Guest",
+    };
+
+    setUser(updatedUser);
+
+    navigate("/dashboard");
+  };
+
+  const handleSkip = () => {
+    // update user to indicate they skipped resume upload
+    const updatedUser = {
+      ...(user || {}),
+      resumeUploaded: false,
+      skills: user?.skills || [],
+      lessons: user?.lessons || [],
+      careerAnswers: user?.careerAnswers || {},
+      username: user?.username || "Guest",
+    };
+
+    setUser(updatedUser);
+
+    // ✅ Navigate to SkipDashboard
+    navigate("/skip-dashboard");
   };
 
   return (
     <div className="auth-wrapper">
       <div className="auth-box">
         <h1 className="auth-title">Upload Your Resume</h1>
-        <p className="auth-subtitle">
-          Upload your resume to automatically build your skill tree
-          from your experience
-        </p>
+        <p className="auth-subtitle">Drag & drop or select a file</p>
 
         <div
           className="drop-zone"
-          onClick={() => document.getElementById('file-input')?.click()}
-          onDragOver={e => {
-            e.preventDefault();
-            e.currentTarget.classList.add('dragover');
-          }}
-          onDragLeave={e => e.currentTarget.classList.remove('dragover')}
-          onDrop={e => {
-            e.preventDefault();
-            e.currentTarget.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-              handleFile(files[0]);
-            }
-          }}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onClick={() => document.getElementById("resumeInput").click()}
         >
           <div className="upload-icon">📄</div>
-          <div>Drop your resume here</div>
-          <div>or click to browse files</div>
-          <div className="upload-hint">Supports PDF, DOC, DOCX files up to 10MB</div>
+          <p>{fileName ? fileName : "Drag & drop your file here or click to browse"}</p>
+          <input
+            id="resumeInput"
+            type="file"
+            accept=".pdf,.doc,.docx"
+            style={{ display: "none" }}
+            onChange={handleFileSelect}
+          />
         </div>
 
-        <input
-          id="file-input"
-          type="file"
-          accept=".pdf,.doc,.docx"
-          style={{ display: 'none' }}
-          onChange={e => {
-            if (e.target.files && e.target.files[0]) {
-              handleFile(e.target.files[0]);
-            }
-          }}
-        />
+        <button type="button" className="auth-btn" onClick={handleUploadContinue}>
+          Continue
+        </button>
 
-        <button className="auth-btn" onClick={() => navigate('/dashboard')}>
+        <button
+          type="button"
+          className="auth-btn secondary"
+          onClick={handleSkip}
+          style={{ marginTop: "12px" }}
+        >
           Skip for now
         </button>
       </div>

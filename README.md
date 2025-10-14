@@ -1,59 +1,169 @@
-# SkillTree — Vite + React + TypeScript
+SkillTree — Vite + React
 
-A small starter app built with Vite, React 19 and TypeScript. Provides a simple onboarding flow (sign in / create account / career quiz / resume upload) and a dashboard with a visual skill tree.
+A starter app built with Vite and React. Provides a simple onboarding flow:
+
+Sign in / Create account
+
+Career quiz
+
+Resume upload (optional)
+
+Dashboard with a visual skill tree populated with AI-generated lessons
 
 Project structure
-- [.gitignore](.gitignore)
-- [eslint.config.js](eslint.config.js)
-- [index.html](index.html)
-- [package.json](package.json)
-- [vite.config.ts](vite.config.ts)
-- [tsconfig.json](tsconfig.json)
-- [tsconfig.app.json](tsconfig.app.json)
-- [tsconfig.node.json](tsconfig.node.json)
-- public/vite.svg
-- src/vite-env.d.ts
-- src/main.tsx — entry (see [src/main.tsx](src/main.tsx))
-- src/App.tsx — routes (see [`App`](src/App.tsx))
-- src/index.css — base styles (see [src/index.css](src/index.css))
-- src/App.css — app styles (see [src/App.css](src/App.css))
+
+.gitignore
+
+eslint.config.js
+
+index.html
+
+package.json
+
+vite.config.js
+
+public/vite.svg
+
+src/main.jsx — entry point
+
+src/App.jsx — routes
+
+src/index.css — base styles
+
+src/App.css — app styles
 
 Components (source files and exported symbols)
-- [`SignIn`](src/components/SignIn.tsx) — sign-in page ([src/components/SignIn.tsx](src/components/SignIn.tsx))
-- [`CreateAccount`](src/components/CreateAccount.tsx) — create account flow ([src/components/CreateAccount.tsx](src/components/CreateAccount.tsx))
-- [`Career`](src/components/Career.tsx) — career questionnaire ([src/components/Career.tsx](src/components/Career.tsx))
-- [`Upload`](src/components/Upload.tsx) — resume upload and [`handleFile`](src/components/Upload.tsx) validation ([src/components/Upload.tsx](src/components/Upload.tsx))
-- [`Dashboard`](src/components/Dashboard.tsx) — main dashboard / skill tree and [`latestSkills`](src/components/Dashboard.tsx) ([src/components/Dashboard.tsx](src/components/Dashboard.tsx))
+
+SignIn
+ — sign-in page
+
+CreateAccount
+ — create account flow
+
+Career
+ — career questionnaire
+
+Upload
+ — resume upload and handleFile
+ validation
+
+Dashboard
+ — main dashboard / skill tree, integrates SkillDashboard
+
+SkipDashboard
+ — alternative dashboard if resume upload is skipped
+
+SkillDashboard
+ — reusable dashboard component, AI lessons dynamically fetched and clickable
+
+LessonPage
+ — dedicated page for a single AI-generated lesson
 
 Notable files (assets & env)
-- [src/assets/react.svg](src/assets/react.svg)
-- [public/vite.svg](public/vite.svg)
-- [src/vite-env.d.ts](src/vite-env.d.ts)
+
+src/assets/react.svg
+
+public/vite.svg
+
+.env — store OPENAI_API_KEY
 
 Overview / behavior details
-- Routing is defined in [`App`](src/App.tsx) — routes:
-  - `/` → [`SignIn`](src/components/SignIn.tsx)
-  - `/quiz` → [`Career`](src/components/Career.tsx)
-  - `/upload` → [`Upload`](src/components/Upload.tsx)
-  - `/dashboard` → [`Dashboard`](src/components/Dashboard.tsx)
-  - `/create-account` → [`CreateAccount`](src/components/CreateAccount.tsx)
-- Auth simulation:
-  - [`SignIn`](src/components/SignIn.tsx) stores the username in localStorage with key `"username"` and navigates to `/quiz`.
-  - [`CreateAccount`](src/components/CreateAccount.tsx) stores `"username"` and `"userEmail"` in localStorage and navigates to `/quiz`.
-- Career quiz:
-  - [`Career`](src/components/Career.tsx) collects answers for three questions and navigates to `/upload` after submission.
-- Upload:
-  - [`Upload`](src/components/Upload.tsx) validates file size (max 10MB) and types (PDF, DOC, DOCX) inside [`handleFile`](src/components/Upload.tsx). After simulated upload it navigates to `/dashboard`. There's also a "Skip for now" button that routes directly to `/dashboard`.
-- Dashboard:
-  - [`Dashboard`](src/components/Dashboard.tsx) reads `localStorage.getItem("username")` and shows the skill tree + previous lessons. The sign-out button clears `"username"` and `"userEmail"` and navigates to `/`.
 
-Scripts (see [package.json](package.json))
-- npm run dev — start Vite dev server
-- npm run build — tsc -b && vite build
-- npm run preview — preview build
-- npm run lint — eslint .
+Routing in App
+:
+
+Route	Component
+/	SignIn
+
+/create-account	CreateAccount
+
+/quiz	Career
+
+/upload	Upload
+
+/dashboard	Dashboard
+
+/skip-dashboard	SkipDashboard
+
+/lesson/:id	LessonPage
+
+Authentication / onboarding:
+
+SignIn stores "username" in localStorage and navigates to /quiz.
+
+CreateAccount stores "username" and "userEmail" in localStorage and navigates to /quiz.
+
+Career quiz:
+
+Collects answers for three questions and navigates to /upload after submission.
+
+Resume upload:
+
+Validates file size (max 10MB) and type (PDF, DOC, DOCX).
+
+After upload, navigates to /dashboard.
+
+"Skip for now" navigates to /skip-dashboard.
+
+Dashboard & SkipDashboard:
+
+Displays AI-generated lessons in a visual skill tree.
+
+Lessons are clickable and navigate to /lesson/:id to show detailed content.
+
+Sign-out clears localStorage and navigates to /.
+
+LessonPage:
+
+Displays the lesson’s title and description (passed via state from dashboard).
+
+Can be extended to show full AI-generated content, videos, steps, or quizzes.
+
+Backend / AI lessons
+
+Server runs on http://localhost:5000
+
+Endpoint: POST /api/generateLessons
+
+Input: { resumeUploaded: boolean, skills: string[], careerAnswers: string[] }
+
+Output: { lessons: [{ title: string, description: string }] }
+
+AI lessons are fetched dynamically and displayed in the dashboard.
+
+Scripts (see package.json
+)
+
+npm run dev — start Vite dev server
+
+npm run build — build production bundle
+
+npm run preview — preview production build
+
+npm run lint — lint project with ESLint
 
 Quick start
-1. Install dependencies
-```sh
+
+Install dependencies:
+
 npm install
+
+
+Start backend server (AI lessons):
+
+node src/backend/server.js
+
+
+Start frontend:
+
+npm run dev
+
+
+Open browser at http://localhost:5173
+
+Complete onboarding flow:
+
+SignIn / CreateAccount → Career Quiz → Upload Resume → Dashboard
+
+
+Click AI lessons in left panel or skill tree to navigate to detailed lesson pages.

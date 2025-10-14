@@ -1,3 +1,4 @@
+// CreateAccount.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -22,11 +23,19 @@ const CreateAccount = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      alert('Account created successfully!');
-      localStorage.setItem("username", username);
-      localStorage.setItem("userEmail", email);
+
+      // Build the new user object
+      const newUser = {
+        username,
+        email,
+        resumeUploaded: false,
+        skills: [],
+        careerAnswers: {},
+      };
+
+      localStorage.setItem("user", JSON.stringify(newUser));
       navigate('/quiz');
-    }, 1500);
+    }, 1200);
   };
 
   return (
