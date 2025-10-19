@@ -1,118 +1,112 @@
-// src/backend/server.js
-import http from "http";
-import { config } from "dotenv";
-import fetch from "node-fetch"; // make sure node-fetch is installed
+import { useState, useEffect } from "react";
 
-config(); // load .env
+export default function CareerLessons({ resumeUploaded, skills = [], careerAnswers = {} }) {
+  const [lessons, setLessons] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-const server = http.createServer(async (req, res) => {
-  // --- CORS ---
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "OPTIONS, POST, GET");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  const VITE_OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
-  if (req.method === "OPTIONS") {
-    res.writeHead(200);
-    res.end();
-    return;
-  }
+  useEffect(() => {
+    const fetchLessons = async () => {
+      setLoading(true);
+      setError(null);
 
-  // --- API endpoint ---
-  if (req.method === "POST" && req.url === "/api/generateLessons") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", async () => {
       try {
-        const { resumeUploaded, skills, careerAnswers } = JSON.parse(body);
+        const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${VITE_OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [
+              {
+                role: "system",
+                content: `The user has the following skills: ${skills.join(", ")}.
+                  Career-related responses: ${JSON.stringify(careerAnswers)}.
+                  ${resumeUploaded ? "" : "Note: the user skipped uploading a resume."}
+                  
+                  Task:
+                  Suggest 3 personalized learning lessons to help the user grow in their chosen career path.
+                  At least one lesson MUST be directly tied to the user's listed skills.
+                  Use the career-related responses as context to ensure recommendations fit the user's interests and goals.
+                  Avoid repeating overly generic topics unless explicitly relevant.
 
-        // --- Improved Prompt for AI ---
-        const prompt = `
-          The user has the following skills: ${skills.join(", ")}.
-          Career-related responses: ${JSON.stringify(careerAnswers)}.
-          ${resumeUploaded ? "" : "Note: the user skipped uploading a resume."}
+                  Format the response strictly as a JSON array, where each item has:
+                    - "title": short name of the lesson
+                    - "description": concise explanation of what will be learned
+                    - "relevance": brief note on why this lesson matters for the user's career development
+                `,
+              },
+            ],
+          }),
+        });
 
-          Task:
-          Suggest 3 personalized learning lessons to help the user grow in their chosen career path. 
-          At least one lesson MUST be directly tied to the user's listed skills. 
-          Use the career-related responses as context to ensure recommendations fit the user's interests and goals.
-          Avoid repeating overly generic topics unless they are explicitly relevant.
+        const data = await aiResponse.json();
+        const rawContent = data.choices?.[0]?.message?.content || "";
 
-          Format the response strictly as a JSON array, where each item has:
-          - "title": a short name of the lesson
-          - "description": a concise explanation of what will be learned
-          - "relevance": a brief note on why this lesson matters for the user's career development
-        `;
+        // Extract JSON safely
+        const jsonStart = rawContent.indexOf("[");
+        const jsonEnd = rawContent.lastIndexOf("]") + 1;
+        const jsonString = rawContent.substring(jsonStart, jsonEnd);
+        const parsedLessons = JSON.parse(jsonString);
 
-        let lessons = [];
-
-        try {
-          const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              model: "gpt-4o-mini",
-              messages: [{ role: "user", content: prompt }]
-            })
-          });
-
-          const data = await aiResponse.json();
-          const rawContent = data.choices?.[0]?.message?.content || "";
-
-          // Safely extract JSON array from response
-          const jsonStart = rawContent.indexOf("[");
-          const jsonEnd = rawContent.lastIndexOf("]") + 1;
-          const jsonString = rawContent.substring(jsonStart, jsonEnd);
-          lessons = JSON.parse(jsonString);
-
-        } catch (err) {
-          console.error("Failed to fetch or parse AI response:", err);
-
-          // --- Adaptive Fallback Lessons ---
-          lessons = skills.length > 0
-            ? skills.slice(0, 3).map(skill => ({
-                title: `Strengthen ${skill}`,
-                description: `Deepen your knowledge and practical application of ${skill}.`,
-                relevance: `${skill} is one of your core skills, and improving it increases your career opportunities.`
-              }))
-            : [
-                {
-                  title: "Problem-Solving Strategies",
-                  description: "Practice structured approaches to analyze and solve complex challenges.",
-                  relevance: "This skill is universally valuable across all industries."
-                },
-                {
-                  title: "Professional Communication",
-                  description: "Learn how to express ideas clearly and collaborate effectively.",
-                  relevance: "Strong communication supports success in any career path."
-                },
-                {
-                  title: "Continuous Learning Mindset",
-                  description: "Build habits for staying adaptable and quickly learning new skills.",
-                  relevance: "Adaptability ensures long-term growth in evolving industries."
-                }
-              ];
-        }
-
-        // Return lessons
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ lessons }));
-
+        setLessons(parsedLessons);
       } catch (err) {
-        console.error(err);
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: err.message }));
-      }
-    });
-  } else {
-    res.writeHead(404, { "Content-Type": "text/plain" });
-    res.end("Not Found");
-  }
-});
+        console.error("AI fetch failed:", err);
 
-// --- Start server ---
-server.listen(5000, () => {
-  console.log("✅ Server running at http://localhost:5000");
-});
+        // --- Fallback lessons ---
+        const fallback = skills.length > 0
+          ? skills.slice(0, 3).map(skill => ({
+              title: `Strengthen ${skill}`,
+              description: `Deepen your knowledge and practical application of ${skill}.`,
+              relevance: `${skill} is one of your core skills, and improving it increases your career opportunities.`,
+            }))
+          : [
+              {
+                title: "Problem-Solving Strategies",
+                description: "Practice structured approaches to analyze and solve complex challenges.",
+                relevance: "This skill is universally valuable across all industries.",
+              },
+              {
+                title: "Professional Communication",
+                description: "Learn how to express ideas clearly and collaborate effectively.",
+                relevance: "Strong communication supports success in any career path.",
+              },
+              {
+                title: "Continuous Learning Mindset",
+                description: "Build habits for staying adaptable and quickly learning new skills.",
+                relevance: "Adaptability ensures long-term growth in evolving industries.",
+              },
+            ];
+
+        setLessons(fallback);
+        setError("Using fallback lessons due to an API issue.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLessons();
+  }, [resumeUploaded, skills, careerAnswers]);
+
+  return (
+    <div className="p-4">
+      <h2 className="text-xl font-semibold mb-3">Personalized Learning Lessons</h2>
+      {loading && <p>Loading lessons...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+
+      <ul className="space-y-3">
+        {lessons.map((lesson, idx) => (
+          <li key={idx} className="p-4 border rounded-xl shadow-sm">
+            <h3 className="font-bold text-lg">{lesson.title}</h3>
+            <p className="text-gray-700">{lesson.description}</p>
+            <p className="text-sm text-gray-500 mt-1"><em>{lesson.relevance}</em></p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

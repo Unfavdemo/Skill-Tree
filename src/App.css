@@ -1,310 +1,844 @@
-/* ============================
-   Global Styles
-   ============================ */
-body {
-  background: linear-gradient(135deg, #24243e 0%, #302b63 50%, #0f0c29 100%);
-  color: #eee;
-  font-family: 'Rubik', sans-serif;
+/* ==========================
+   🌍 GLOBAL RESET & BASICS
+========================== */
+* {
   margin: 0;
   padding: 0;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
   box-sizing: border-box;
 }
 
-/* ============================
-   Dashboard Layout
-   ============================ */
-.dashboard-container {
-  width: 100%;
-  max-width: 1280px;              /* fits nicely on laptops */
-  min-height: 100vh;              /* fills screen height */
-  margin: 0 auto;
-  padding: 16px;
-  display: grid;
-  grid-template-columns: minmax(250px, 1fr) 3fr; /* left sidebar | main */
-  grid-template-rows: auto 1fr auto;             /* profile | main | footer */
-  gap: 16px;
-  box-sizing: border-box;
-}
-
-/* Profile header */
-.profile-pic-section {
-  grid-column: 1 / span 2;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
-  padding: 16px;
-  text-align: center;
-  font-weight: 600;
-  position: relative;
-}
-
-/* Sidebar lessons / previous lessons */
-.sidebar-left {
-  grid-column: 1 / 2;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;  /* scroll if too many lessons */
-  max-height: 70vh;
-}
-
-.skill-card {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 12px;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.skill-title {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.progress-bar {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  height: 8px;
-  margin: 8px 0;
-  width: 100%;
-}
-
-.progress-fill {
-  background: #4caf50;
+html, body {
   height: 100%;
-  border-radius: 6px;
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #1b0245 0%, #3b0ca3 40%, #040117 100%);
+  color: #f9f8ff;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
-.progress-text {
-  font-size: 12px;
-  text-align: right;
-}
-
-.prev-lesson-label {
-  font-size: 11px;
-  color: #bbb;
-  margin: 4px 0 10px;
-  text-align: center;
-}
-
-/* Skill tree (center panel) */
-.skill-tree-center {
-  grid-column: 2 / 3;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 16px;
-  min-height: 50vh;
+/* ==========================
+   🌟 SCREEN CONTAINERS
+========================== */
+.screen {
+  width: 90%;
+  max-width: 1300px;
+  background: rgba(35, 20, 90, 0.95);
+  border-radius: 24px;
+  border: 2px solid rgba(185, 144, 255, 0.4);
+  box-shadow: 0 8px 40px rgba(124, 58, 237, 0.5), inset 0 0 30px rgba(0, 216, 255, 0.1);
+  backdrop-filter: blur(12px);
+  padding: 30px 40px;
+  margin: 30px auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 20px;
+  overflow: hidden;
+  animation: floatScreen 6s ease-in-out infinite;
+}
+@keyframes floatScreen {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
-.tree-header,
-.tree-footer {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 600;
-}
-
-.tree-visual {
-  flex: 1;
-  margin: 16px 0;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;  /* vertical stacking */
-  justify-content: space-evenly;
-  padding: 20px;
-}
-
-.tree-level {
-  display: flex;
-  justify-content: space-around; /* spread horizontally */
-  align-items: center;
-  flex: 1;
-}
-
-.skill-node {
-  background: #1a1a2e;
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-size: 13px;
-  min-width: 80px;
-  text-align: center;
-}
-
-.skill-node.root {
-  background: #4caf50;
-  font-weight: bold;
-}
-
-.skill-node.child {
-  background: #3f3d56;
-}
-
-/* Latest skills section */
-.latest-skills-card {
-  grid-column: 1 / span 2;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 14px;
-}
-
-.latest-title {
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.section-title {
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.skill-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.skill-list li {
-  margin: 6px 0;
-}
-
-.more-skills {
-  font-size: 12px;
-  color: #bbb;
-  margin-top: 10px;
-}
-
-/* ============================
-   Auth Pages
-   ============================ */
-.auth-wrapper {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.auth-box {
-  background: rgba(255, 255, 255, 0.08);
-  padding: 30px;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 420px;
-  text-align: center;
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-}
-
-.auth-title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 6px;
-}
-
-.auth-subtitle {
-  font-size: 14px;
-  color: #bbb;
+.screen-header {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #b990ff;
+  text-shadow: 0 0 15px rgba(160, 120, 255, 0.7);
   margin-bottom: 20px;
 }
 
-.auth-input {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  border-radius: 8px;
-  border: none;
-  font-size: 14px;
-  box-sizing: border-box;
+.screen-content {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
 }
 
-.auth-btn {
-  width: 100%;
-  padding: 12px;
-  margin-top: 12px;
-  border-radius: 8px;
-  border: none;
-  background: #4caf50;
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.3s ease;
+.screen-footer {
+  font-size: 0.95rem;
+  color: #d3d8ff;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(185, 144, 255, 0.4);
 }
 
-.auth-btn:hover {
-  background: #45a049;
+/* ==========================
+   🧭 SIDE PANELS
+========================== */
+.sidebar-left, .sidebar-right {
+  width: 260px;
+  background: rgba(55, 40, 120, 0.85);
+  border-radius: 18px;
+  border: 1px solid rgba(185, 144, 255, 0.3);
+  box-shadow: 0 0 25px rgba(160, 120, 255, 0.4);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
-.auth-link {
-  display: block;
-  margin-top: 12px;
-  color: #4cafef;
-  font-size: 13px;
-  text-decoration: none;
+.sidebar-left ul, .sidebar-right ul {
+  list-style: none;
+  padding: 0;
 }
 
-.auth-link:hover {
-  text-decoration: underline;
-}
-
-.auth-footer {
-  margin-top: 16px;
-  font-size: 12px;
-  color: #aaa;
-}
-
-/* ============================
-   Upload Page
-   ============================ */
-.drop-zone {
-  margin: 20px 0;
-  padding: 30px;
-  border: 2px dashed rgba(255, 255, 255, 0.3);
+.sidebar-left li, .sidebar-right li {
+  padding: 10px 14px;
+  margin-bottom: 8px;
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.3s ease;
-  text-align: center;
-  width: 100%;
-  box-sizing: border-box;
+  transition: all 0.3s ease;
+  background: rgba(185, 144, 255, 0.15);
+}
+.sidebar-left li:hover, .sidebar-right li:hover {
+  background: rgba(0, 216, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 216, 255, 0.4);
+  transform: translateX(2px) scale(1.02);
 }
 
-.drop-zone.dragover {
-  background: rgba(255, 255, 255, 0.1);
+/* ==========================
+   ⚡ CENTER SKILL TREE
+========================== */
+.skill-tree-center {
+  flex: 1;
+  border-radius: 20px;
+  background: radial-gradient(circle at center, #3b23c3 0%, #1a0d60 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 400px;
+  box-shadow: inset 0 0 50px rgba(100, 200, 255, 0.2);
+}
+
+/* Skill nodes */
+.skill-node {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle at top left, #7a58ff 0%, #321d9c 100%);
+  box-shadow: 0 0 20px rgba(185, 144, 255, 0.6);
+  border: 2px solid #b990ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f6f6ff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.skill-node:hover {
+  transform: scale(1.2);
+  background: linear-gradient(145deg, #00d8ff, #7c3aed);
+  box-shadow: 0 0 40px rgba(0, 216, 255, 0.8);
+}
+
+/* ==========================
+   ⚔️ QUEST PANEL
+========================== */
+.quest-panel {
+  background: rgba(40, 20, 90, 0.9);
+  border: 1px solid rgba(185, 144, 255, 0.3);
+  border-radius: 24px;
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 0 35px rgba(165, 120, 255, 0.5);
+  backdrop-filter: blur(12px);
+}
+
+.quest-panel h3 {
+  color: #b990ff;
+  margin-bottom: 12px;
+  text-shadow: 0 0 8px rgba(160, 120, 255, 0.6);
+}
+
+.quest-panel li {
+  background: rgba(185, 144, 255, 0.15);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+.quest-panel li:hover {
+  transform: translateX(4px) scale(1.03);
+  background: rgba(0, 216, 255, 0.3);
+  box-shadow: 0 0 18px rgba(0, 216, 255, 0.5);
+}
+
+/* ==========================
+   🧾 FORMS
+========================== */
+form {
+  background: rgba(35, 20, 90, 0.8);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 0 40px rgba(160, 120, 255, 0.3);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+input, textarea, select {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(185, 144, 255, 0.4);
+  background: rgba(50, 30, 120, 0.6);
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease, box-shadow 0.4s ease;
+  box-shadow: 0 0 10px rgba(160, 120, 255, 0.2);
+}
+input:focus, textarea:focus {
+  border-color: #00d8ff;
+  box-shadow: 0 0 20px rgba(0, 216, 255, 0.4);
+  transform: scale(1.02);
+}
+
+/* ==========================
+   🎛 BUTTONS
+========================== */
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(90deg, #7c3aed, #00d8ff);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+button:hover {
+  transform: translateY(-2px) scale(1.03);
+  background: linear-gradient(90deg, #00d8ff, #7c3aed);
+  box-shadow: 0 0 35px rgba(0, 216, 255, 0.8);
+}
+
+
+/* ==========================
+   📄 UPLOAD PAGE
+========================== */
+.auth-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1b0245 0%, #3b0ca3 40%, #040117 100%);
+  padding: 20px;
+}
+
+.auth-box {
+  width: 450px;
+  max-width: 90%;
+  background: rgba(35, 20, 90, 0.95);
+  border-radius: 24px;
+  padding: 40px 30px;
+  box-shadow: 0 0 50px rgba(124, 58, 237, 0.6), inset 0 0 30px rgba(0, 216, 255, 0.1);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  text-align: center;
+}
+
+.auth-title {
+  font-size: 2rem;
+  color: #b990ff;
+  text-shadow: 0 0 12px rgba(185, 144, 255, 0.7);
+  font-weight: 700;
+}
+
+.auth-subtitle {
+  font-size: 1rem;
+  color: #d3d8ff;
+  margin-bottom: 20px;
+}
+
+.drop-zone {
+  background: rgba(50, 30, 120, 0.6);
+  border: 2px dashed rgba(185, 144, 255, 0.5);
+  border-radius: 20px;
+  padding: 40px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.drop-zone:hover {
+  background: rgba(55, 40, 120, 0.8);
+  box-shadow: 0 0 35px rgba(0, 216, 255, 0.5);
+  transform: scale(1.02);
 }
 
 .upload-icon {
-  font-size: 32px;
-  margin-bottom: 10px;
+  font-size: 3rem;
+  margin-bottom: 12px;
+  color: #7c3aed;
+  text-shadow: 0 0 10px rgba(124, 58, 237, 0.8);
 }
 
-.upload-hint {
-  font-size: 12px;
-  color: #bbb;
-  margin-top: 8px;
+.drop-zone p {
+  color: #f6f6ff;
+  font-size: 0.95rem;
+  text-align: center;
 }
 
-/* ============================
-   Responsive Tweaks
-   ============================ */
-@media (max-width: 1024px) {
-  .dashboard-container {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto;
-    max-width: 95%;
+.auth-btn {
+  margin-top: 12px;
+  width: 100%;
+  background: linear-gradient(90deg, #7c3aed, #00d8ff);
+  color: #fff;
+  font-weight: 600;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(124, 58, 237, 0.6);
+  transition: all 0.3s ease;
+}
+
+.auth-btn.secondary {
+  background: rgba(55, 40, 120, 0.7);
+  box-shadow: 0 0 20px rgba(0, 216, 255, 0.4);
+  color: #d3d8ff;
+}
+
+.auth-btn:hover {
+  background: linear-gradient(90deg, #00d8ff, #7c3aed);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 0 40px rgba(0, 216, 255, 0.8);
+}
+
+.auth-btn.secondary:hover {
+  background: rgba(55, 40, 120, 0.85);
+  box-shadow: 0 0 35px rgba(124, 58, 237, 0.6);
+}
+
+/* ==========================
+   🌟 CAREER QUESTIONNAIRE STYLES
+========================== */
+
+.career-screen {
+  max-width: 600px;
+  width: 90%;
+  margin: 30px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: rgba(35, 20, 90, 0.95);
+  border-radius: 24px;
+  border: 2px solid rgba(185, 144, 255, 0.4);
+  box-shadow: 0 8px 40px rgba(124, 58, 237, 0.5),
+    inset 0 0 30px rgba(0, 216, 255, 0.1);
+  padding: 30px 25px;
+  animation: floatScreen 6s ease-in-out infinite;
+}
+
+/* Individual question blocks */
+.career-question {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: rgba(50, 30, 120, 0.7);
+  border-radius: 18px;
+  box-shadow: 0 0 25px rgba(124, 58, 237, 0.3);
+  transition: all 0.3s ease;
+}
+
+.career-question label {
+  color: #b990ff;
+  font-weight: 600;
+  text-shadow: 0 0 6px rgba(185, 144, 255, 0.5);
+  font-size: 1.1rem;
+}
+
+.career-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Checkbox option as toggle button */
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(185, 144, 255, 0.4);
+  background: rgba(55, 40, 120, 0.6);
+  color: #f6f6ff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.checkbox-option input {
+  display: none; /* hide the default checkbox */
+}
+
+/* Add a pop effect when selected */
+.checkbox-option.checked {
+  background: linear-gradient(135deg, #7c3aed, #00d8ff);
+  color: #fff;
+  border-color: #00d8ff;
+  box-shadow: 0 0 12px rgba(0, 216, 255, 0.6), 0 0 20px rgba(124, 58, 237, 0.5);
+  transform: scale(1.05);
+}
+
+/* Hover effect */
+.checkbox-option:hover {
+  border-color: #00d8ff;
+  box-shadow: 0 0 8px rgba(0, 216, 255, 0.4);
+  transform: scale(1.02);
+}
+
+/* Buttons */
+.career-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(90deg, #7c3aed, #00d8ff);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.5);
+  transition: all 0.3s ease;
+}
+
+.career-btn:hover {
+  background: linear-gradient(90deg, #00d8ff, #7c3aed);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 18px rgba(0, 216, 255, 0.6);
+}
+
+/* Progress bar */
+.career-progress {
+  height: 8px;
+  border-radius: 8px;
+  background: rgba(100, 60, 200, 0.3);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.career-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #00d8ff);
+  width: 0%;
+  transition: width 0.5s ease-in-out;
+}
+
+/* Responsive */
+@media (max-width: 650px) {
+  .career-screen {
+    padding: 25px 15px;
+  }
+  .career-question {
+    padding: 15px;
+  }
+  .career-btn {
+    padding: 12px;
+  }
+}
+/* ==========================
+   📚 LESSON & SKILL SUMMARY BOXES
+========================== */
+.lesson-skill-summary {
+  display: flex;
+  gap: 20px;
+  margin-top: 30px;
+  flex-wrap: wrap; /* allows wrapping on smaller screens */
+}
+
+.lesson-skill-summary > div {
+  flex: 1 1 45%; /* take equal width, shrink on small screens */
+  background: rgba(35, 20, 90, 0.95);
+  border-radius: 20px;
+  border: 2px solid rgba(185, 144, 255, 0.4);
+  box-shadow: 0 8px 40px rgba(124, 58, 237, 0.5), inset 0 0 20px rgba(0, 216, 255, 0.1);
+  padding: 20px;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lesson-skill-summary h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #b990ff;
+  text-shadow: 0 0 8px rgba(185, 144, 255, 0.5);
+  margin-bottom: 8px;
+}
+
+.lesson-skill-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.lesson-skill-summary li {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(55, 40, 120, 0.6);
+  color: #f6f6ff;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+
+.lesson-skill-summary li:hover {
+  background: rgba(0, 216, 255, 0.3);
+  box-shadow: 0 0 12px rgba(0, 216, 255, 0.4);
+  transform: scale(1.02);
+}
+
+/* ==========================
+   🧠 Bottom Dashboard Boxes
+========================== */
+.dashboard-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+  margin-top: 30px;
+  flex-wrap: wrap; /* makes it responsive on smaller screens */
+}
+
+/* Each bottom box */
+.sidebar-bottom {
+  flex: 1;
+  min-width: 280px;
+}
+
+/* ==========================
+   🌌 Skill Dashboard Styles
+========================== */
+
+.skill-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: #eee;
+}
+
+/* Screen Header */
+.skill-dashboard .screen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Skill Content Area */
+.skill-content {
+  display: flex;
+  gap: 20px;
+  position: relative;
+  flex-wrap: wrap;
+}
+
+/* Sidebar Left: Skills List */
+.sidebar-left {
+  width: 220px;
+  min-width: 200px;
+}
+
+/* Sidebar Right: Lessons Panel */
+.sidebar-right {
+  width: 280px;
+  min-width: 240px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+/* Skill Map Center */
+.skill-tree-center {
+  flex: 1;
+  min-height: 400px;
+  position: relative;
+  border: 2px dashed rgba(124, 58, 237, 0.3);
+  border-radius: 16px;
+  background: rgba(50, 20, 90, 0.2);
+}
+
+/* Skill Node */
+.skill-node {
+  background: linear-gradient(135deg, #7c3aed, #00d8ff);
+  color: #fff;
+  font-weight: bold;
+  padding: 8px 14px;
+  border-radius: 50px;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.5);
+  transition: all 0.3s ease;
+}
+
+/* Bottom Boxes */
+.dashboard-bottom {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.dashboard-bottom > div {
+  flex: 1;
+  min-width: 250px;
+  background: rgba(50, 30, 120, 0.6);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.4);
+}
+
+/* Scrollable lesson list */
+.sidebar-right ul {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* Footer XP Tracker */
+.screen-footer.xp-tracker {
+  margin-top: 10px;
+  padding: 10px 15px;
+  background: rgba(55, 40, 120, 0.7);
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* ==========================
+   🎮 Lesson Page Styles
+========================== */
+.game-container {
+  background: rgba(55, 40, 120, 0.6);
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.4);
+  margin-top: 20px;
+}
+
+.completion-message {
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(0, 200, 120, 0.7);
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 216, 255, 0.4);
+}
+
+/* Back to Dashboard Button */
+.back-btn {
+  margin-top: 20px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  background: linear-gradient(90deg, #7c3aed, #00d8ff);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.5);
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  background: linear-gradient(90deg, #00d8ff, #7c3aed);
+  box-shadow: 0 6px 18px rgba(0, 216, 255, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .skill-content {
+    flex-direction: column;
+  }
+  .sidebar-left,
+  .sidebar-right {
+    width: 100%;
+  }
+  .dashboard-bottom {
+    flex-direction: column;
+  }
+}
+/* src/index.css or a dedicated lesson-page.css */
+
+/* Base screen layout */
+.screen {
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #24243e 0%, #302b63 50%, #0f0c29 100%);
+  color: #eee;
+  font-family: 'Rubik', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.screen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-btn {
+  padding: 0.5rem 1rem;
+  background: #6b21a8;
+  color: #fff;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.auth-btn:hover {
+  background: #7e22ce;
+}
+
+/* Lesson container */
+.lesson-page .bg-purple-900\/30 {
+  background-color: rgba(76, 29, 149, 0.3); /* semi-transparent */
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Scenario text */
+.lesson-page p.italic {
+  font-style: italic;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #d1d5db; /* light gray */
+}
+
+/* Challenge heading */
+.lesson-page h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #c084fc; /* purple accent */
+}
+
+/* Challenge text */
+.lesson-page p.text-gray-200 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  min-height: 3em; /* prevents layout jump while loading */
+}
+
+/* Textarea for answer */
+.lesson-page textarea {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: rgba(76, 29, 149, 0.4);
+  border-radius: 0.75rem;
+  color: #f3f4f6;
+  font-size: 1rem;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+
+.lesson-page textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #a78bfa;
+  background-color: rgba(76, 29, 149, 0.6);
+}
+
+/* Buttons */
+.lesson-page .flex.gap-3 button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.lesson-page .flex.gap-3 button:hover {
+  opacity: 0.9;
+}
+
+/* Feedback text */
+.lesson-page .text-green-400 {
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+/* Completed message */
+.lesson-page .motion-div {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.lesson-page .motion-div h3 {
+  font-size: 1.25rem;
+  color: #4ade80; /* green */
+  margin-bottom: 0.5rem;
+}
+
+.lesson-page .motion-div p {
+  color: #d1d5db;
+}
+
+/* Loading placeholder */
+.lesson-page .loading-placeholder {
+  min-height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: italic;
+  color: #9ca3af;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .lesson-page .bg-purple-900\/30 {
+    padding: 1rem;
   }
 
-  .skill-node {
-    font-size: 11px;
-    padding: 6px 8px;
+  .lesson-page h4,
+  .lesson-page p {
+    font-size: 1rem;
   }
+}
+/* Skeleton loader */
+.skeleton-block {
+  display: block;
+  width: 100%;
+  height: 1.2rem;
+  border-radius: 0.25rem;
+  background: linear-gradient(
+    90deg,
+    #4b0082 25%,
+    #6b21a8 50%,
+    #4b0082 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 

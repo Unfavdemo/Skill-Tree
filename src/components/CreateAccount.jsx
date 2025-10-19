@@ -1,96 +1,93 @@
-// CreateAccount.jsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// src/components/CreateAccount.jsx
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useUser } from "../Context/UserContext";
 
-const CreateAccount = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+export default function CreateAccount() {
+  const { setUser } = useUser();
   const navigate = useNavigate();
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    resumeUploaded: false,
+    resumeSkills: [], // Placeholder for future parsed skills
+  });
+  const [resumeFileName, setResumeFileName] = useState("");
 
-  const handleCreate = () => {
-    if (!username || !email || !password || !confirmPassword) {
-      alert('Please fill in all fields');
-      return;
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleResumeUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setForm({ ...form, resumeUploaded: true });
+      setResumeFileName(file.name);
+
+      // TODO: optional resume parsing logic here to populate resumeSkills
+      // Example:
+      // const extractedSkills = parseResume(file);
+      // setForm({ ...form, resumeUploaded: true, resumeSkills: extractedSkills });
     }
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
+  };
 
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-      // Build the new user object
-      const newUser = {
-        username,
-        email,
-        resumeUploaded: false,
-        skills: [],
-        careerAnswers: {},
-      };
+    const newUser = {
+      username: form.username,
+      email: form.email,
+      loggedIn: true,
+      resumeUploaded: form.resumeUploaded,
+      resumeSkills: form.resumeSkills,
+      careerAnswers: [],
+      lessons: [],
+      skills: [],
+    };
 
-      localStorage.setItem("user", JSON.stringify(newUser));
-      navigate('/quiz');
-    }, 1200);
+    // Save user to context + localStorage
+    setUser(newUser);
+    localStorage.setItem("user", JSON.stringify(newUser));
+
+    // ✅ Go straight to Career page
+    navigate("/career");
   };
 
   return (
     <div className="auth-wrapper">
       <div className="auth-box">
-        <h1 className="auth-title">🌱 Create Account</h1>
-        <p className="auth-subtitle">Join SkillTree and start your journey</p>
-
-        <input
-          type="text"
-          className="auth-input"
-          placeholder="Choose a username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-        />
-        <input
-          type="email"
-          className="auth-input"
-          placeholder="Enter your email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          className="auth-input"
-          placeholder="Enter your password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-        />
-        <input
-          type="password"
-          className="auth-input"
-          placeholder="Confirm your password"
-          value={confirmPassword}
-          onChange={e => setConfirmPassword(e.target.value)}
-        />
-
-        <button className="auth-btn" onClick={handleCreate} disabled={loading}>
-          {loading ? 'Creating Account...' : 'Create Account'}
-        </button>
-
-        <a
-          onClick={() => navigate('/')}
-          className="auth-link"
-          style={{ cursor: 'pointer' }}
-        >
-          Already have an account? Sign In
-        </a>
-
-        <div className="auth-footer">
-          © 2025 SkillTree. Start building your skills today.
-        </div>
+        <h1 className="auth-title">Create Account</h1>
+        <form onSubmit={handleSubmit}>
+          <input
+            name="username"
+            type="text"
+            placeholder="Username"
+            value={form.username}
+            onChange={handleChange}
+            required
+          />
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
+          <button type="submit" className="auth-btn">
+            Create Account
+          </button>
+        </form>
       </div>
     </div>
   );
-};
-
-export default CreateAccount;
+}

@@ -36,7 +36,7 @@ const SignIn = () => {
       localStorage.setItem("user", JSON.stringify(user));
       setUser(user);
 
-      navigate('/quiz');
+      navigate('/dashboard');
     }, 1000);
   };
 

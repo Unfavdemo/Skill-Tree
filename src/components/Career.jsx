@@ -1,84 +1,139 @@
-// src/components/Career.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../Context/UserContext";
 
-const Career = () => {
-  const navigate = useNavigate();
+export default function Career() {
   const { user, setUser } = useUser();
-  const [answers, setAnswers] = useState({});
+  const navigate = useNavigate();
 
+  // Load existing answers (or empty object for multi-choice)
+  const [answers, setAnswers] = useState(user?.careerAnswers || {});
+
+  // Diverse questions for any career path
   const questions = [
-    { id: "interest", question: "Which area interests you the most?", options: ["Technology", "Creative Arts", "Healthcare", "Business", "Education"] },
-    { id: "style", question: "What work style do you prefer?", options: ["Independent", "Team-based", "Hands-on", "Analytical", "Leadership"] },
-    { id: "goal", question: "What motivates you in a career?", options: ["Helping others", "Innovation", "Financial growth", "Creativity", "Stability"] },
+    {
+      question: "What are your top career goals?",
+      options: [
+        "Leadership/Management",
+        "Technical expertise",
+        "Creative development",
+        "Entrepreneurship",
+        "Work-life balance",
+        "Professional growth",
+      ],
+      key: "careerGoals",
+    },
+    {
+      question: "Which skills are you most interested in developing?",
+      options: [
+        "Coding / Programming",
+        "Data Analysis",
+        "Design / UX",
+        "Marketing & Sales",
+        "Project Management",
+        "Communication / Presentation",
+        "Problem Solving",
+      ],
+      key: "skillsDevelopment",
+    },
+    {
+      question: "Which industries interest you the most?",
+      options: [
+        "Technology / Software",
+        "Finance / Banking",
+        "Healthcare / Biotech",
+        "Education / Training",
+        "Entertainment / Media",
+        "Manufacturing / Engineering",
+        "Consulting / Services",
+      ],
+      key: "industryInterests",
+    },
   ];
 
-  const handleSelect = (qId, option) => setAnswers(prev => ({ ...prev, [qId]: option }));
-
-  const handleSubmit = () => {
-    // debug: confirm handler runs
-    console.log("Career.handleSubmit called - answers:", answers);
-
-    if (Object.keys(answers).length < questions.length) {
-      alert("Please answer all questions!");
-      return;
-    }
-
-    const updatedUser = {
-      ...(user || {}),
-      username: (user && user.username) || "GuestUser",
-      careerAnswers: answers,
-      resumeUploaded: !!(user && user.resumeUploaded),
-      skills: (user && user.skills) || [],
-      lessons: (user && user.lessons) || [],
-    };
-
-    console.log("Career - updating user to:", updatedUser);
-
-    // setUser from context will persist to localStorage via UserContext
-    setUser(updatedUser);
-
-    // navigation: go to dashboard if resume exists, else upload
-    if (updatedUser.resumeUploaded) navigate("/dashboard");
-    else navigate("/upload");
+  // Toggle checkbox selection
+  const handleCheckboxChange = (questionKey, option) => {
+    const current = answers[questionKey] || [];
+    const updated = current.includes(option)
+      ? current.filter((o) => o !== option)
+      : [...current, option];
+    setAnswers({ ...answers, [questionKey]: updated });
   };
 
+  // Submit answers and navigate
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const updatedUser = {
+      ...user,
+      careerAnswers: answers,
+      onboarding: true,
+    };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    navigate("/upload");
+  };
+
+  useEffect(() => {
+    if (!user) navigate("/");
+  }, [user, navigate]);
+
+  // Progress: number of questions answered / total
+  const progressPercent =
+    (questions.filter((q) => (answers[q.key] || []).length > 0).length /
+      questions.length) *
+    100;
+
   return (
-    <div className="auth-wrapper">
-      <div className="auth-box">
-        <h1 className="auth-title">Career Questionnaire</h1>
-        <p className="auth-subtitle">Tell us a bit about your career interests</p>
+    <div className="screen career-screen">
+      <div className="screen-header">Career Questionnaire</div>
 
-        {questions.map(q => (
-          <div key={q.id} style={{ marginBottom: "16px", textAlign: "left" }}>
-            <p style={{ fontWeight: "600" }}>{q.question}</p>
-            {q.options.map(opt => (
-              <label key={opt} style={{ display: "block", margin: "6px 0" }}>
-                <input
-                  type="radio"
-                  name={q.id}
-                  value={opt}
-                  checked={answers[q.id] === opt}
-                  onChange={() => handleSelect(q.id, opt)}
-                />{" "}
-                {opt}
-              </label>
-            ))}
-          </div>
-        ))}
+      {/* Progress bar */}
+      <div className="career-progress">
+        <div
+          className="career-progress-fill"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
 
-        <button
-          type="button"
-          className="auth-btn"
-          onClick={handleSubmit}
-          aria-label="Continue to next step"
-        >
-          Continue
-        </button>
+      <div className="screen-content">
+        <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+          {questions.map((q, idx) => (
+            <div key={idx} className="career-question">
+              <label>{q.question}</label>
+              <div className="career-options checkbox-group">
+                {q.options.map((option) => {
+                  const isChecked = (answers[q.key] || []).includes(option);
+                  return (
+                    <label
+                      key={option}
+                      className={`career-option checkbox-option ${
+                        isChecked ? "checked" : ""
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleCheckboxChange(q.key, option)}
+                      />
+                      {option}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          <button type="submit" className="career-btn">
+            Next
+          </button>
+        </form>
+      </div>
+
+      <div className="screen-footer">
+        Progress:{" "}
+        {questions.filter((q) => (answers[q.key] || []).length > 0).length} /{" "}
+        {questions.length}
       </div>
     </div>
   );
-};
-
-export default Career;
+}

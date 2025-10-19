@@ -10,22 +10,16 @@ const Upload = () => {
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFileName(file.name);
-    }
+    if (file) setFileName(file.name);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file) {
-      setFileName(file.name);
-    }
+    if (file) setFileName(file.name);
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
+  const handleDragOver = (e) => e.preventDefault();
 
   const handleUploadContinue = () => {
     if (!fileName) {
@@ -34,34 +28,21 @@ const Upload = () => {
     }
 
     const updatedUser = {
-      ...(user || {}),
+      ...user,
       resumeUploaded: true,
-      skills: user?.skills || [],
-      lessons: user?.lessons || [],
-      careerAnswers: user?.careerAnswers || {},
-      username: user?.username || "Guest",
+      resumeSkills: [], // placeholder for extracted resume skills
     };
 
     setUser(updatedUser);
-
+    localStorage.setItem("user", JSON.stringify(updatedUser));
     navigate("/dashboard");
   };
 
   const handleSkip = () => {
-    // update user to indicate they skipped resume upload
-    const updatedUser = {
-      ...(user || {}),
-      resumeUploaded: false,
-      skills: user?.skills || [],
-      lessons: user?.lessons || [],
-      careerAnswers: user?.careerAnswers || {},
-      username: user?.username || "Guest",
-    };
-
+    const updatedUser = { ...user, resumeUploaded: false, resumeSkills: [] };
     setUser(updatedUser);
-
-    // ✅ Navigate to SkipDashboard
-    navigate("/skip-dashboard");
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    navigate("/dashboard");
   };
 
   return (
@@ -77,7 +58,7 @@ const Upload = () => {
           onClick={() => document.getElementById("resumeInput").click()}
         >
           <div className="upload-icon">📄</div>
-          <p>{fileName ? fileName : "Drag & drop your file here or click to browse"}</p>
+          <p>{fileName || "Drag & drop your file here or click to browse"}</p>
           <input
             id="resumeInput"
             type="file"
@@ -91,12 +72,7 @@ const Upload = () => {
           Continue
         </button>
 
-        <button
-          type="button"
-          className="auth-btn secondary"
-          onClick={handleSkip}
-          style={{ marginTop: "12px" }}
-        >
+        <button type="button" className="auth-btn secondary" onClick={handleSkip}>
           Skip for now
         </button>
       </div>
