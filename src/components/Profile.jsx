@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useUser } from "../Context/UserContext";
 import { useNavigate } from "react-router-dom";
 import { generateLessons } from "../utils/generateLessons";
-import "./src/styles/profile.css";
+import "../src/styles/profile.css";
 
 export default function Profile() {
   const { user, setUser } = useUser();
