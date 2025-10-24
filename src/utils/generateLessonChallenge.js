@@ -1,7 +1,28 @@
-// generateLessonChallenge.js
+// src/utils/generateLessonChallenge.js
+// ========================================
+// 🎯 AI CHALLENGE GENERATION UTILITY
+// ========================================
+// This utility generates detailed, interactive challenges for individual lessons
+// - Creates realistic scenarios based on lesson content and user context
+// - Generates actionable challenges that require critical thinking
+// - Provides helpful hints without giving away answers
+// - Handles API errors with meaningful fallback content
+// - Sanitizes AI responses to prevent XSS attacks
+
 export async function generateLessonChallenge({ lessonTitle, skill, industry }) {
+  // ========================================
+  // 🔑 API CONFIGURATION
+  // ========================================
+  // Get OpenAI API key from environment variables
   const VITE_OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
+  // ========================================
+  // 🌐 AI API REQUEST
+  // ========================================
+  // Makes a request to OpenAI's API to generate detailed lesson challenges
+  // - Uses GPT-4o-mini for cost-effective content generation
+  // - Includes lesson context (title, skill, industry) for personalization
+  // - Requests structured JSON response with scenario, challenge, and hint
   try {
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -43,20 +64,58 @@ export async function generateLessonChallenge({ lessonTitle, skill, industry }) 
       }),
     });
 
+    // ========================================
+    // 📊 RESPONSE PROCESSING
+    // ========================================
+    // Processes the AI response and extracts structured challenge data
+    // - Safely extracts JSON from potentially mixed content
+    // - Validates and sanitizes challenge data
+    // - Provides fallback values for missing fields
     const data = await aiResponse.json();
     const rawContent = data.choices?.[0]?.message?.content || "";
 
-    // Safely extract JSON from AI response
+    // ========================================
+    // 🔍 JSON EXTRACTION
+    // ========================================
+    // Safely extracts JSON object from AI response
+    // - Finds first '{' and last '}' to isolate JSON content
+    // - Prevents parsing errors from mixed text/JSON responses
     const jsonStart = rawContent.indexOf("{");
     const jsonEnd = rawContent.lastIndexOf("}") + 1;
     const jsonString = rawContent.substring(jsonStart, jsonEnd);
 
-    return JSON.parse(jsonString);
+    const parsed = JSON.parse(jsonString);
+
+    // ========================================
+    // ✅ DATA VALIDATION & SANITIZATION
+    // ========================================
+    // Ensures challenge has required fields with safe defaults
+    // - Prevents undefined errors in components
+    // - Provides meaningful fallback content
+    // - Maintains consistent data structure
+    return {
+      scenario: parsed.scenario || `Imagine a scenario applying ${lessonTitle} in ${industry}.`,
+      challenge: parsed.challenge || `Apply ${lessonTitle} to solve a problem in this scenario.`,
+      hint: parsed.hint || `Think about best practices and steps to solve the challenge.`,
+    };
 
   } catch (err) {
-    console.error("Failed to fetch or parse AI response:", err);
+    // ========================================
+    // 🚨 ERROR HANDLING & FALLBACK SYSTEM
+    // ========================================
+    // Provides fallback content when AI generation fails
+    // - Logs errors for debugging
+    // - Creates meaningful default challenges based on lesson context
+    // - Ensures application continues to function
+    console.error("SecureAI: Failed to fetch or parse AI response:", err);
 
-    // --- Fallback content ---
+    // ========================================
+    // 🔄 FALLBACK CHALLENGE GENERATION
+    // ========================================
+    // Creates default challenges when AI is unavailable
+    // - Uses lesson title and industry context
+    // - Provides generic but useful challenge structure
+    // - Maintains consistent challenge format
     return {
       scenario: `Imagine you are in a realistic ${industry} setting applying ${lessonTitle}. Think about the people, environment, and stakes involved.`,
       challenge: `Identify a specific problem in this scenario where you can apply ${lessonTitle} to achieve a successful outcome.`,

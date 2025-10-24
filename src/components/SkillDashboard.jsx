@@ -1,9 +1,9 @@
-// src/components/SkillDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../Context/UserContext";
 import { generateLessons } from "../utils/generateLessons";
 import { motion } from "framer-motion";
+import DOMPurify from "dompurify";
 
 export default function SkillDashboard() {
   const { user, setUser } = useUser();
@@ -13,9 +13,18 @@ export default function SkillDashboard() {
   const [aiLessons, setAiLessons] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState(null);
   const [skills, setSkills] = useState(user?.skills || []);
-  const [previousLessons, setPreviousLessons] = useState(
-    user?.completedLessons || {}
-  );
+  const [previousLessons, setPreviousLessons] = useState(user?.completedLessons || {});
+
+  const sanitize = (value) => DOMPurify.sanitize(value);
+
+  // ========================================
+  // ✂️ TEXT TRUNCATION HELPER
+  // ========================================
+  // Truncates long skill names to fit better in skill nodes
+  const truncateSkillName = (skillName, maxLength = 15) => {
+    if (skillName.length <= maxLength) return skillName;
+    return skillName.substring(0, maxLength - 3) + "...";
+  };
 
   useEffect(() => {
     if (!user) return navigate("/"); // redirect if no user
@@ -31,23 +40,20 @@ export default function SkillDashboard() {
           challenges: 3,
         });
 
-        const skillTitles = lessons.map((lesson) => lesson.title);
+        const skillTitles = lessons.map((lesson) => sanitize(lesson.title));
 
         setSkills(skillTitles);
-        setUser((prev) => ({ ...prev, skills: skillTitles }));
-        localStorage.setItem(
-          "user",
-          JSON.stringify({ ...user, skills: skillTitles })
-        );
+        const updatedUser = { ...user, skills: skillTitles };
+        setUser(updatedUser);
+        localStorage.setItem("user", btoa(JSON.stringify(updatedUser)));
       } catch (err) {
-        console.error("Failed to generate skills:", err);
+        console.error("SecureAI: Failed to generate skills:", err);
       } finally {
         setLoading(false);
       }
     };
 
     generateSkillsOnce();
-    // run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -62,9 +68,13 @@ export default function SkillDashboard() {
         challenges: 3,
       });
 
-      setAiLessons(Array.isArray(lessons) ? lessons : []);
+      setAiLessons(Array.isArray(lessons) ? lessons.map(l => ({
+        ...l,
+        title: sanitize(l.title),
+        description: sanitize(l.description),
+      })) : []);
     } catch (err) {
-      console.error("Failed to generate lessons:", err);
+      console.error("SecureAI: Failed to generate lessons:", err);
       setAiLessons([]);
     } finally {
       setLoading(false);
@@ -93,7 +103,7 @@ export default function SkillDashboard() {
       <div className="screen-header flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-purple-400">
-            Welcome, {user?.username || "Adventurer"} 👋
+            Welcome, {sanitize(user?.username || "Adventurer")} 👋
           </h2>
           <p className="text-sm text-gray-300">
             Your skill mastery journey begins here...
@@ -101,15 +111,12 @@ export default function SkillDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Profile Button */}
           <button
             onClick={handleProfileClick}
             className="auth-btn bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded"
           >
             Profile
           </button>
-
-          {/* Sign Out */}
           <button
             className="auth-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
             onClick={handleSignOut}
@@ -130,13 +137,12 @@ export default function SkillDashboard() {
                 <li
                   key={i}
                   className={`p-3 rounded-lg cursor-pointer text-white hover:bg-purple-700/50 transition-all ${
-                    selectedSkill === skill
-                      ? "bg-purple-700/70"
-                      : "bg-purple-900/40"
+                    selectedSkill === skill ? "bg-purple-700/70" : "bg-purple-900/40"
                   }`}
                   onClick={() => handleNodeClick(skill)}
+                  title={sanitize(skill)} // Show full name on hover
                 >
-                  {skill}
+                  {truncateSkillName(sanitize(skill))}
                   <div className="text-xs text-green-300 mt-1">
                     Mastery: {previousLessons[skill]?.level || 0}
                   </div>
@@ -169,8 +175,9 @@ export default function SkillDashboard() {
                   transform: "translate(-50%, -50%)",
                 }}
                 whileHover={{ scale: 1.2, boxShadow: "0 0 20px #d900ff" }}
+                title={sanitize(skill)} // Show full name on hover
               >
-                {skill}
+                {truncateSkillName(sanitize(skill))}
               </motion.div>
             );
           })}
@@ -178,7 +185,7 @@ export default function SkillDashboard() {
 
         {/* Right Panel: Lessons */}
         <div className="sidebar-right">
-          <h3>{selectedSkill ? `${selectedSkill} Lessons` : "Select a Skill"}</h3>
+          <h3>{selectedSkill ? `${sanitize(selectedSkill)} Lessons` : "Select a Skill"}</h3>
           {selectedSkill ? (
             loading ? (
               <p className="text-gray-300">✨ Generating lessons...</p>
@@ -190,8 +197,8 @@ export default function SkillDashboard() {
                     className="p-3 rounded-lg cursor-pointer bg-purple-900/40 hover:bg-purple-700/50"
                     onClick={() => handleLessonClick(lesson)}
                   >
-                    <strong>{lesson.title}</strong>
-                    <p className="text-sm text-gray-300">{lesson.description}</p>
+                    <strong>{sanitize(lesson.title)}</strong>
+                    <p className="text-sm text-gray-300">{sanitize(lesson.description)}</p>
                   </li>
                 ))}
               </ul>
@@ -215,11 +222,11 @@ export default function SkillDashboard() {
             <ul className="text-gray-200 space-y-1">
               {Object.entries(previousLessons).map(([skill, lessons]) => (
                 <li key={skill}>
-                  <strong>{skill}:</strong>{" "}
+                  <strong>{sanitize(skill)}:</strong>{" "}
                   {Object.entries(lessons)
                     .map(
                       ([lessonName, data]) =>
-                        `${lessonName} (Lvl ${data.level || 0})`
+                        `${sanitize(lessonName)} (Lvl ${data.level || 0})`
                     )
                     .join(", ")}
                 </li>
@@ -236,7 +243,7 @@ export default function SkillDashboard() {
           {skills.length > 0 ? (
             <ul className="text-gray-200 space-y-1">
               {skills.map((skill, i) => (
-                <li key={i}>{skill}</li>
+                <li key={i}>{sanitize(skill)}</li>
               ))}
             </ul>
           ) : (
@@ -247,8 +254,7 @@ export default function SkillDashboard() {
 
       {/* Footer XP Tracker */}
       <div className="screen-footer xp-tracker mt-6">
-        🧙‍♂️ Level {Math.floor(skills.length / 3) + 1} Adventurer •{" "}
-        {skills.length * 100} XP
+        🧙‍♂️ Level {Math.floor(skills.length / 3) + 1} Adventurer • {skills.length * 100} XP
       </div>
     </div>
   );

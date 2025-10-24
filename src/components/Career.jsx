@@ -1,15 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../Context/UserContext";
+import DOMPurify from "dompurify";
 
 export default function Career() {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
 
-  // Load existing answers (or empty object for multi-choice)
-  const [answers, setAnswers] = useState(user?.careerAnswers || {});
+  // 🧩 Initialize answers safely (avoid undefined structures)
+  const [answers, setAnswers] = useState(() => {
+    try {
+      return user?.careerAnswers || {};
+    } catch {
+      console.warn("SecureAI: Failed to load user career answers.");
+      return {};
+    }
+  });
 
-  // Diverse questions for any career path
+  // 🧠 Centralized sanitizer for defensive input handling
+  const sanitizeInput = (input) => {
+    if (Array.isArray(input)) return input.map((v) => DOMPurify.sanitize(v));
+    return DOMPurify.sanitize(input);
+  };
+
+  // 🎯 Secure question definitions
   const questions = [
     {
       question: "What are your top career goals?",
@@ -51,33 +65,64 @@ export default function Career() {
     },
   ];
 
-  // Toggle checkbox selection
+  // 🧰 Toggle checkbox securely with sanitized input
   const handleCheckboxChange = (questionKey, option) => {
-    const current = answers[questionKey] || [];
-    const updated = current.includes(option)
-      ? current.filter((o) => o !== option)
-      : [...current, option];
-    setAnswers({ ...answers, [questionKey]: updated });
+    const safeKey = DOMPurify.sanitize(questionKey);
+    const safeOption = DOMPurify.sanitize(option);
+
+    const current = answers[safeKey] || [];
+    const updated = current.includes(safeOption)
+      ? current.filter((o) => o !== safeOption)
+      : [...current, safeOption];
+
+    setAnswers({ ...answers, [safeKey]: updated });
   };
 
-  // Submit answers and navigate
+  // 🚀 Submit securely with safe local storage handling
   const handleSubmit = (e) => {
     e.preventDefault();
-    const updatedUser = {
-      ...user,
-      careerAnswers: answers,
-      onboarding: true,
-    };
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    navigate("/upload");
+    try {
+      const sanitizedAnswers = Object.fromEntries(
+        Object.entries(answers).map(([k, v]) => [k, sanitizeInput(v)])
+      );
+
+      const updatedUser = {
+        ...user,
+        careerAnswers: sanitizedAnswers,
+        onboarding: true,
+      };
+
+      setUser(updatedUser);
+
+      // 🧱 Encode before storage (discourages casual tampering)
+      const encoded = btoa(JSON.stringify(updatedUser));
+      localStorage.setItem("user", encoded);
+
+      navigate("/upload");
+    } catch (err) {
+      console.error("SecureAI: Failed to persist user answers", err);
+      alert("⚠️ Your progress could not be saved securely. Please try again.");
+    }
   };
 
+  // 🔎 Runtime guard: detect missing or corrupted user data
   useEffect(() => {
-    if (!user) navigate("/");
+    if (!user) {
+      console.warn("SecureAI: Missing user context – redirecting to login.");
+      navigate("/");
+      return;
+    }
+
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) JSON.parse(atob(stored));
+    } catch {
+      console.warn("SecureAI: Corrupted or tampered user data detected.");
+      localStorage.removeItem("user");
+    }
   }, [user, navigate]);
 
-  // Progress: number of questions answered / total
+  // 📊 Progress bar calculation
   const progressPercent =
     (questions.filter((q) => (answers[q.key] || []).length > 0).length /
       questions.length) *

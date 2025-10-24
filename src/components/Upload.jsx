@@ -1,25 +1,50 @@
-// src/components/Upload.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../Context/UserContext";
+import DOMPurify from "dompurify";
 
 const Upload = () => {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
   const [fileName, setFileName] = useState("");
 
+  const sanitize = (value) => DOMPurify.sanitize(value.trim());
+
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
-    if (file) setFileName(file.name);
+    if (!file) return;
+
+    if (!validateFile(file)) return;
+    setFileName(sanitize(file.name));
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file) setFileName(file.name);
+    if (!file) return;
+
+    if (!validateFile(file)) return;
+    setFileName(sanitize(file.name));
   };
 
   const handleDragOver = (e) => e.preventDefault();
+
+  const validateFile = (file) => {
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Unsupported file type. Use PDF, DOC, or DOCX.");
+      return false;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File too large. Maximum 5MB.");
+      return false;
+    }
+    return true;
+  };
 
   const handleUploadContinue = () => {
     if (!fileName) {
@@ -34,21 +59,21 @@ const Upload = () => {
     };
 
     setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+    localStorage.setItem("user", btoa(JSON.stringify(updatedUser)));
     navigate("/dashboard");
   };
 
   const handleSkip = () => {
     const updatedUser = { ...user, resumeUploaded: false, resumeSkills: [] };
     setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+    localStorage.setItem("user", btoa(JSON.stringify(updatedUser)));
     navigate("/dashboard");
   };
 
   return (
     <div className="auth-wrapper">
       <div className="auth-box">
-        <h1 className="auth-title">Upload Your Resume</h1>
+        <h1 className="auth-title">{sanitize("Upload Your Resume")}</h1>
         <p className="auth-subtitle">Drag & drop or select a file</p>
 
         <div

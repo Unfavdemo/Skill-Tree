@@ -1,8 +1,8 @@
-// src/pages/Profile.jsx
 import React, { useState } from "react";
 import { useUser } from "../Context/UserContext";
 import { useNavigate } from "react-router-dom";
 import { generateLessons } from "../utils/generateLessons";
+import DOMPurify from "dompurify";
 import "../styles/Profile.css";
 
 export default function Profile() {
@@ -16,9 +16,28 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
 
+  // Sanitize input helper
+  const sanitize = (value) => DOMPurify.sanitize(value.trim());
+
+  // Resume upload with validation
   const handleResumeUpload = (e) => {
     const file = e.target.files[0];
-    if (file) setResumeFile(file);
+    if (!file) return;
+
+    // ✅ Only allow text, PDF, or DOC/DOCX; max 5MB
+    const allowedTypes = ["text/plain", "application/pdf", 
+      "application/msword", 
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Unsupported file type. Use TXT, PDF, or DOC/DOCX.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File too large. Maximum 5MB.");
+      return;
+    }
+
+    setResumeFile(file);
   };
 
   const handleSave = async () => {
@@ -26,39 +45,40 @@ export default function Profile() {
     setFeedback("");
 
     try {
-      // Convert resume to text if uploaded
+      // Extract resume text safely
       let resumeText = user?.resumeText || "";
       if (resumeFile) {
         resumeText = await resumeFile.text();
+        resumeText = sanitize(resumeText);
       }
 
       const updatedUser = {
         ...user,
-        username,
-        email,
-        industry,
+        username: sanitize(username),
+        email: sanitize(email),
+        industry: sanitize(industry),
         resumeText,
       };
 
       setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      localStorage.setItem("user", btoa(JSON.stringify(updatedUser)));
 
-      // Regenerate skills/lessons based on updated info
+      // Regenerate lessons/skills
       const newSkills = await generateLessons({
         skills: [],
         careerAnswers: updatedUser.careerAnswers || [],
-        resumeSkills: updatedUser.resumeText ? [updatedUser.resumeText] : [],
+        resumeSkills: resumeText ? [resumeText] : [],
         challenges: 3,
       });
 
-      const skillTitles = newSkills.map((lesson) => lesson.title);
-      updatedUser.skills = skillTitles;
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      const skillTitles = newSkills.map((lesson) => DOMPurify.sanitize(lesson.title));
+      const finalUser = { ...updatedUser, skills: skillTitles };
+      setUser(finalUser);
+      localStorage.setItem("user", btoa(JSON.stringify(finalUser)));
 
       setFeedback("✅ Profile updated and skills regenerated!");
     } catch (err) {
-      console.error("Failed to update profile:", err);
+      console.error("SecureAI: Failed to update profile:", err);
       setFeedback("❌ Failed to update profile. Try again.");
     } finally {
       setLoading(false);
@@ -76,127 +96,139 @@ export default function Profile() {
   const level = Math.floor((user.skills?.length || 0) / 3) + 1;
 
   return (
-    <div className="screen p-6 max-w-4xl mx-auto space-y-6">
-      <h2 className="text-3xl font-bold text-purple-400">Profile</h2>
+    <div className="screen profile-container">
+      {/* Profile Header */}
+      <div className="profile-header">
+        <h2>Profile</h2>
+      </div>
 
       {/* User Info Form */}
-      <div className="space-y-4 bg-purple-900/30 p-4 rounded-lg">
-        <div>
-          <label className="block text-gray-300 mb-1">Username</label>
+      <div className="profile-form">
+        <div className="profile-field">
+          <label>Username</label>
           <input
             type="text"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-2 rounded bg-purple-900/40 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            onChange={(e) => setUsername(sanitize(e.target.value))}
+            placeholder="Enter your username"
           />
         </div>
 
-        <div>
-          <label className="block text-gray-300 mb-1">Email</label>
+        <div className="profile-field">
+          <label>Email</label>
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 rounded bg-purple-900/40 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            onChange={(e) => setEmail(sanitize(e.target.value))}
+            placeholder="Enter your email"
           />
         </div>
 
-        <div>
-          <label className="block text-gray-300 mb-1">Industry</label>
+        <div className="profile-field">
+          <label>Industry</label>
           <select
             value={industry}
-            onChange={(e) => setIndustry(e.target.value)}
-            className="w-full p-2 rounded bg-purple-900/40 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            onChange={(e) => setIndustry(sanitize(e.target.value))}
           >
             <option value="">Select Industry</option>
-            <option value="Technology / Software">Technology / Software</option>
-            <option value="Finance / Banking">Finance / Banking</option>
-            <option value="Healthcare / Biotech">Healthcare / Biotech</option>
-            <option value="Education / Training">Education / Training</option>
-            <option value="Entertainment / Media">Entertainment / Media</option>
-            <option value="Manufacturing / Engineering">Manufacturing / Engineering</option>
-            <option value="Consulting / Services">Consulting / Services</option>
+            {[
+              "Technology / Software",
+              "Finance / Banking",
+              "Healthcare / Biotech",
+              "Education / Training",
+              "Entertainment / Media",
+              "Manufacturing / Engineering",
+              "Consulting / Services",
+            ].map((ind) => (
+              <option key={ind} value={ind}>{ind}</option>
+            ))}
           </select>
         </div>
 
-        <div>
-          <label className="block text-gray-300 mb-1">Upload Resume (optional)</label>
+        <div className="profile-field">
+          <label>Upload Resume (optional)</label>
           <input
             type="file"
             accept=".txt,.pdf,.doc,.docx"
             onChange={handleResumeUpload}
-            className="w-full p-2 rounded bg-purple-900/40 text-white"
           />
         </div>
 
-        <div className="flex gap-4 mt-4">
+        <div className="profile-actions">
           <button
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white"
+            className="profile-btn profile-btn-primary"
             onClick={handleSave}
             disabled={loading}
           >
             {loading ? "Saving..." : "Save & Regenerate Skills"}
           </button>
           <button
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white"
+            className="profile-btn profile-btn-secondary"
             onClick={() => navigate("/dashboard")}
           >
             Back to Dashboard
           </button>
         </div>
 
-        {feedback && <p className="mt-2 text-green-400">{feedback}</p>}
+        {feedback && (
+          <div className={`profile-feedback ${
+            feedback.includes("✅") ? "profile-feedback-success" : "profile-feedback-error"
+          }`}>
+            {feedback}
+          </div>
+        )}
       </div>
 
       {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-purple-900/40 p-4 rounded-lg">
-          <h4 className="text-purple-300 font-semibold mb-2">XP</h4>
-          <p className="text-white">{xp}</p>
+      <div className="profile-stats">
+        <div className="profile-stat-card">
+          <h4>XP</h4>
+          <p>{xp}</p>
         </div>
 
-        <div className="bg-purple-900/40 p-4 rounded-lg">
-          <h4 className="text-purple-300 font-semibold mb-2">Level</h4>
-          <p className="text-white">{level}</p>
+        <div className="profile-stat-card">
+          <h4>Level</h4>
+          <p>{level}</p>
         </div>
 
-        <div className="bg-purple-900/40 p-4 rounded-lg">
-          <h4 className="text-purple-300 font-semibold mb-2">Skills Gained</h4>
+        <div className="profile-stat-card">
+          <h4>Skills Gained</h4>
           {user.skills?.length > 0 ? (
-            <ul className="text-white space-y-1">
+            <ul>
               {user.skills.map((skill, i) => (
-                <li key={i}>{skill}</li>
+                <li key={i}>{sanitize(skill)}</li>
               ))}
             </ul>
           ) : (
-            <p className="text-gray-400">No skills gained yet.</p>
+            <p style={{ color: '#9ca3af' }}>No skills gained yet.</p>
           )}
         </div>
       </div>
 
       {/* Previous Lessons */}
-      <div className="bg-purple-900/40 p-4 rounded-lg">
-        <h4 className="text-purple-300 font-semibold mb-2">Previous Lessons</h4>
+      <div className="profile-lessons">
+        <h4>Previous Lessons</h4>
         {user.completedLessons && Object.keys(user.completedLessons).length > 0 ? (
-          <ul className="text-white space-y-1">
+          <ul>
             {Object.entries(user.completedLessons).map(([skill, lessons]) => (
               <li key={skill}>
-                <strong>{skill}:</strong>{" "}
+                <strong>{sanitize(skill)}:</strong>{" "}
                 {Object.entries(lessons)
-                  .map(([lessonName, data]) => `${lessonName} (Lvl ${data.level || 0})`)
+                  .map(([lessonName, data]) => `${sanitize(lessonName)} (Lvl ${data.level || 0})`)
                   .join(", ")}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-gray-400">No lessons completed yet.</p>
+          <p style={{ color: '#9ca3af' }}>No lessons completed yet.</p>
         )}
       </div>
 
-      <div className="mt-4">
+      {/* Sign Out Button */}
+      <div className="profile-actions">
         <button
           onClick={handleSignOut}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white"
+          className="profile-btn profile-btn-danger"
         >
           Sign Out
         </button>

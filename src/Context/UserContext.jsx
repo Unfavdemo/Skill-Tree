@@ -1,70 +1,148 @@
+// src/Context/UserContext.jsx
+// ========================================
+// 🛡️ SECURE USER CONTEXT PROVIDER
+// ========================================
+// This context provides global user state management with security features:
+// - Safe localStorage with Base64 encoding to prevent casual tampering
+// - Default structures for new users to prevent undefined errors
+// - Functional updates to avoid infinite loops and state corruption
+// - Clear initialization and sign-out handling
+// - Comprehensive error handling for data persistence
+// - XSS prevention through input sanitization (implemented in components)
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+// ========================================
+// 🏗️ CONTEXT CREATION
+// ========================================
+// Creates the React Context for user state management
 const UserContext = createContext();
 
+// ========================================
+// 🎯 USER PROVIDER COMPONENT
+// ========================================
+// Main provider component that manages user state across the entire application
+// - Handles user authentication state
+// - Manages localStorage persistence with Base64 encoding
+// - Provides loading states for better UX
+// - Implements secure data handling patterns
 export const UserProvider = ({ children }) => {
-  const [user, setUserState] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // ========================================
+  // 📊 STATE MANAGEMENT
+  // ========================================
+  const [user, setUserState] = useState(null);        // Current user data
+  const [loading, setLoading] = useState(true);      // Loading state for initial data fetch
 
-  // ✅ Load user once on mount
+  // ========================================
+  // 🔄 INITIAL DATA LOADING
+  // ========================================
+  // Loads user data from localStorage on component mount
+  // - Uses Base64 decoding for basic data obfuscation
+  // - Handles corrupted or missing data gracefully
+  // - Sets loading state to false when complete
   useEffect(() => {
     try {
       const stored = localStorage.getItem("user");
       if (stored) {
-        const parsed = JSON.parse(stored);
+        // Decode Base64-encoded user data
+        const parsed = JSON.parse(atob(stored));
         setUserState(parsed);
       }
     } catch (err) {
-      console.error("Failed to parse user from localStorage:", err);
+      console.error("SecureAI: Failed to parse user from localStorage:", err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // ✅ Safe setter (no infinite loops)
+  // ========================================
+  // 🔐 SECURE USER STATE UPDATER
+  // ========================================
+  // Safely updates user state with automatic localStorage persistence
+  // - Supports both direct values and functional updates
+  // - Automatically encodes data to Base64 before storage
+  // - Handles null values by removing from localStorage
+  // - Includes comprehensive error handling
   const setUser = (value) => {
     setUserState((prev) => {
+      // Handle both direct values and functional updates
       const next = typeof value === "function" ? value(prev) : value;
 
       try {
         if (next === null) {
+          // Clear localStorage when user signs out
           localStorage.removeItem("user");
         } else {
-          localStorage.setItem("user", JSON.stringify(next));
+          // Encode user data to Base64 before storing
+          localStorage.setItem("user", btoa(JSON.stringify(next)));
         }
       } catch (err) {
-        console.error("Failed to save user:", err);
+        console.error("SecureAI: Failed to save user:", err);
       }
 
       return next;
     });
   };
 
-  // ✅ Initialize empty structure for new users
+  // ========================================
+  // 👤 USER INITIALIZATION HELPER
+  // ========================================
+  // Creates a new user object with safe default values
+  // - Prevents undefined errors by providing fallback values
+  // - Ensures consistent user data structure
+  // - Automatically sets loggedIn flag to true
+  // - Merges provided data with defaults
   const initializeUser = (data) => {
     const newUser = {
-      name: data.name || "",
-      email: data.email || "",
-      industry: data.industry || "", // <– new field for industry selection
-      completedLessons: data.completedLessons || {}, // skill-based tracking
-      ...data,
+      username: data.username || "",                    // User's display name
+      email: data.email || "",                         // Contact email
+      industry: data.industry || "",                   // Career field
+      resumeUploaded: data.resumeUploaded || false,    // Resume upload status
+      resumeSkills: data.resumeSkills || [],           // Skills extracted from resume
+      completedLessons: data.completedLessons || {},  // Progress tracking: skill -> lesson -> level
+      skills: data.skills || [],                       // User's skill list
+      lessons: data.lessons || [],                     // Available lessons
+      careerAnswers: data.careerAnswers || {},        // Career questionnaire responses
+      loggedIn: true,                                  // Authentication flag
+      ...data,                                         // Merge any additional data
     };
     setUser(newUser);
   };
 
-  // ✅ Reset user data (e.g., on sign-out)
+  // ========================================
+  // 🚪 USER CLEANUP HELPER
+  // ========================================
+  // Completely removes user data from both state and localStorage
+  // - Used for sign-out functionality
+  // - Ensures no sensitive data remains in browser storage
+  // - Resets application to initial state
   const clearUser = () => {
     localStorage.removeItem("user");
     setUserState(null);
   };
 
+  // ========================================
+  // 🎁 CONTEXT PROVIDER
+  // ========================================
+  // Provides user context to all child components
+  // - Exposes user state and helper functions
+  // - Makes authentication and user data available globally
   return (
-    <UserContext.Provider value={{ user, setUser, initializeUser, clearUser, loading }}>
+    <UserContext.Provider
+      value={{ user, setUser, initializeUser, clearUser, loading }}
+    >
       {children}
     </UserContext.Provider>
   );
 };
 
+// ========================================
+// 🎣 CUSTOM HOOK FOR USER CONTEXT
+// ========================================
+// Provides easy access to user context throughout the application
+// - Throws error if used outside of UserProvider
+// - Ensures proper context usage and prevents runtime errors
+// - Returns all user-related state and functions
 export const useUser = () => {
   const ctx = useContext(UserContext);
   if (!ctx) throw new Error("useUser must be used inside a UserProvider");
