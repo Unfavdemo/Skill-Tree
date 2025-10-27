@@ -44,8 +44,9 @@ export const UserProvider = ({ children }) => {
     try {
       const stored = localStorage.getItem("user");
       if (stored) {
-        // Decode Base64-encoded user data
-        const parsed = JSON.parse(atob(stored));
+        // Decode Base64-encoded user data with Unicode support
+        const decoded = decodeURIComponent(escape(atob(stored)));
+        const parsed = JSON.parse(decoded);
         setUserState(parsed);
       }
     } catch (err) {
@@ -73,8 +74,9 @@ export const UserProvider = ({ children }) => {
           // Clear localStorage when user signs out
           localStorage.removeItem("user");
         } else {
-          // Encode user data to Base64 before storing
-          localStorage.setItem("user", btoa(JSON.stringify(next)));
+          // Encode user data to Base64 with Unicode support before storing
+          const jsonString = JSON.stringify(next);
+          localStorage.setItem("user", btoa(unescape(encodeURIComponent(jsonString))));
         }
       } catch (err) {
         console.error("SecureAI: Failed to save user:", err);

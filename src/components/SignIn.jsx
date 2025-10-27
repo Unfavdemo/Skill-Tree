@@ -67,9 +67,17 @@ const SignIn = () => {
       // ========================================
       // 💾 USER DATA RETRIEVAL
       // ========================================
-      // Load user data from localStorage with Base64 decoding
+      // Load user data from localStorage with Unicode-safe Base64 decoding
       let stored = localStorage.getItem("user");
-      let user = stored ? JSON.parse(atob(stored)) : null;
+      let user = null;
+      if (stored) {
+        try {
+          const decoded = decodeURIComponent(escape(atob(stored)));
+          user = JSON.parse(decoded);
+        } catch (err) {
+          console.warn("SecureAI: Failed to decode user data:", err);
+        }
+      }
 
       // ========================================
       // 👤 USER CREATION OR VALIDATION
@@ -92,10 +100,9 @@ const SignIn = () => {
       // ========================================
       // 🔐 SECURE DATA PERSISTENCE
       // ========================================
-      // Save sanitized user data to context and localStorage
+      // Save sanitized user data to context (handles localStorage with proper encoding)
       const safeUser = { ...user, username: sanitize(user.username) };
       setUser(safeUser);
-      localStorage.setItem("user", btoa(JSON.stringify(safeUser)));
 
       // Navigate to dashboard after successful authentication
       navigate('/dashboard');

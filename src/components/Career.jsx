@@ -26,7 +26,7 @@ export default function Career() {
   // 🎯 Secure question definitions
   const questions = [
     {
-      question: "What are your top career goals?",
+      question: "What are your top career goals?(select all that apply)",
       options: [
         "Leadership/Management",
         "Technical expertise",
@@ -38,7 +38,7 @@ export default function Career() {
       key: "careerGoals",
     },
     {
-      question: "Which skills are you most interested in developing?",
+      question: "Which skills are you most interested in developing?(select all that apply)",
       options: [
         "Coding / Programming",
         "Data Analysis",
@@ -51,7 +51,7 @@ export default function Career() {
       key: "skillsDevelopment",
     },
     {
-      question: "Which industries interest you the most?",
+      question: "Which industries interest you the most?(select all that apply)",
       options: [
         "Technology / Software",
         "Finance / Banking",
@@ -93,10 +93,7 @@ export default function Career() {
       };
 
       setUser(updatedUser);
-
-      // 🧱 Encode before storage (discourages casual tampering)
-      const encoded = btoa(JSON.stringify(updatedUser));
-      localStorage.setItem("user", encoded);
+      // Note: setUser already saves to localStorage with proper Unicode-safe encoding
 
       navigate("/upload");
     } catch (err) {
@@ -115,7 +112,10 @@ export default function Career() {
 
     try {
       const stored = localStorage.getItem("user");
-      if (stored) JSON.parse(atob(stored));
+      if (stored) {
+        const decoded = decodeURIComponent(escape(atob(stored)));
+        JSON.parse(decoded);
+      }
     } catch {
       console.warn("SecureAI: Corrupted or tampered user data detected.");
       localStorage.removeItem("user");

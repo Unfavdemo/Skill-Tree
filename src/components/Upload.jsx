@@ -59,14 +59,14 @@ const Upload = () => {
     };
 
     setUser(updatedUser);
-    localStorage.setItem("user", btoa(JSON.stringify(updatedUser)));
+    // Note: setUser already saves to localStorage with proper encoding
     navigate("/dashboard");
   };
 
   const handleSkip = () => {
     const updatedUser = { ...user, resumeUploaded: false, resumeSkills: [] };
     setUser(updatedUser);
-    localStorage.setItem("user", btoa(JSON.stringify(updatedUser)));
+    // Note: setUser already saves to localStorage with proper encoding
     navigate("/dashboard");
   };
 

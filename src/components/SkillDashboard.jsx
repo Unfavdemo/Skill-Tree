@@ -45,7 +45,7 @@ export default function SkillDashboard() {
         setSkills(skillTitles);
         const updatedUser = { ...user, skills: skillTitles };
         setUser(updatedUser);
-        localStorage.setItem("user", btoa(JSON.stringify(updatedUser)));
+        // Note: setUser already saves to localStorage with proper encoding
       } catch (err) {
         console.error("SecureAI: Failed to generate skills:", err);
       } finally {

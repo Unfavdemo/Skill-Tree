@@ -111,8 +111,8 @@ export default function CreateAccount() {
       // ========================================
       // 🔐 PASSWORD SECURITY
       // ========================================
-      // Basic password encoding (replace with proper hashing in production)
-      const encodedPassword = btoa(form.password);
+      // Basic password encoding with Unicode support (replace with proper hashing in production)
+      const encodedPassword = btoa(unescape(encodeURIComponent(form.password)));
 
       // ========================================
       // 👤 USER OBJECT CREATION
@@ -133,12 +133,8 @@ export default function CreateAccount() {
       // ========================================
       // 💾 DATA PERSISTENCE
       // ========================================
-      // Update global user context
+      // Update global user context (already handles localStorage with proper encoding)
       setUser(newUser);
-
-      // Encode user data for localStorage to prevent casual tampering
-      const encodedData = btoa(JSON.stringify(newUser));
-      localStorage.setItem("user", encodedData);
 
       // Navigate to next onboarding step (career questionnaire)
       navigate("/career");

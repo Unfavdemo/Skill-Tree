@@ -61,7 +61,7 @@ export default function Profile() {
       };
 
       setUser(updatedUser);
-      localStorage.setItem("user", btoa(JSON.stringify(updatedUser)));
+      // Note: setUser already saves to localStorage with proper encoding
 
       // Regenerate lessons/skills
       const newSkills = await generateLessons({
@@ -74,7 +74,7 @@ export default function Profile() {
       const skillTitles = newSkills.map((lesson) => DOMPurify.sanitize(lesson.title));
       const finalUser = { ...updatedUser, skills: skillTitles };
       setUser(finalUser);
-      localStorage.setItem("user", btoa(JSON.stringify(finalUser)));
+      // Note: setUser already saves to localStorage with proper encoding
 
       setFeedback("✅ Profile updated and skills regenerated!");
     } catch (err) {
