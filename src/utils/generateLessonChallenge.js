@@ -36,28 +36,39 @@ export async function generateLessonChallenge({ lessonTitle, skill, industry }) 
           {
             role: "system",
             content: `
-              You are a professional tutor generating a detailed, engaging lesson challenge.
+Generate engaging lesson challenges for ALL industries (healthcare, finance, education, marketing, hospitality, etc.) - NOT just tech/coding.
 
-              User Context:
-              - Lesson Title: ${lessonTitle}
-              - Skill: ${skill || "general"}
-              - Industry: ${industry || "general"}
+Context:
+- Lesson: "${lessonTitle}"
+- Skill: ${skill || "general professional skill"}
+- Industry: ${industry || "any professional field"}
 
-              Task:
-              Generate a scenario, challenge, and a helpful hint tailored to this lesson.
-              Make the scenario realistic and immersive:
-                * Include a setting, characters, or context relevant to the industry.
-                * Show why the skill matters in this situation.
-              Make the challenge actionable:
-                * Require the user to think critically, apply knowledge, or solve a problem.
-              Provide a concise but practical hint.
+Scenario Requirements:
+Create a realistic, immersive professional scenario with:
+- Clear setting (office, hospital, school, retail, studio, etc.)
+- Relevant characters/stakeholders
+- Authentic context for their field
+- Why the skill matters in this situation
 
-              Respond STRICTLY in JSON format like this:
-              {
-                "scenario": "A detailed scenario with context and characters",
-                "challenge": "A clear, realistic task or problem to solve",
-                "hint": "A helpful tip to guide the user without giving the answer"
-              }
+Challenge Requirements:
+- Clear, actionable task or problem to solve
+- Requires critical thinking and knowledge application
+- Relevant to professional work
+- Avoids overly technical language unless explicitly needed
+
+Hint Requirements:
+- Concise, practical guidance
+- Focuses on best practices and thinking steps
+- Does NOT reveal the answer
+
+CRITICAL: Use contexts like workplaces, client meetings, team collaboration, problem-solving situations - applicable to traditional careers, service industries, creative fields, etc. DO NOT default to programming/coding scenarios.
+
+Respond in JSON only:
+{
+  "scenario": "Detailed professional scenario with setting and context",
+  "challenge": "Clear, actionable professional task",
+  "hint": "Helpful guidance without giving away the answer"
+}
             `,
           },
         ],
@@ -114,12 +125,14 @@ export async function generateLessonChallenge({ lessonTitle, skill, industry }) 
     // ========================================
     // Creates default challenges when AI is unavailable
     // - Uses lesson title and industry context
-    // - Provides generic but useful challenge structure
+    // - Provides universal professional challenge structure
     // - Maintains consistent challenge format
+    // - Applicable to any field, not just tech
+    const industryContext = industry && industry !== "general" ? industry : "your professional field";
     return {
-      scenario: `Imagine you are in a realistic ${industry} setting applying ${lessonTitle}. Think about the people, environment, and stakes involved.`,
-      challenge: `Identify a specific problem in this scenario where you can apply ${lessonTitle} to achieve a successful outcome.`,
-      hint: `Consider the key steps, industry best practices, and potential obstacles that someone with this skill would face.`,
+      scenario: `Imagine you are in a realistic professional setting in ${industryContext} where you need to apply ${lessonTitle}. Consider the workplace environment, colleagues or clients involved, and the potential impact of your actions.`,
+      challenge: `Describe a specific real-world situation in ${industryContext} where you would apply ${lessonTitle}. Explain your approach to addressing this situation effectively.`,
+      hint: `Think about professional best practices, key considerations specific to your field, the stakeholders involved, and practical steps that lead to successful outcomes.`,
     };
   }
 }

@@ -22,6 +22,7 @@ const SignIn = () => {
   const [username, setUsername] = useState('');         // User's username input
   const [password, setPassword] = useState('');         // User's password input
   const [loading, setLoading] = useState(false);       // Loading state for authentication
+  const [error, setError] = useState('');               // Error message state
   const { setUser } = useUser();                       // Access to global user context
   const navigate = useNavigate();                      // React Router navigation hook
 
@@ -32,14 +33,32 @@ const SignIn = () => {
   const sanitize = (value) => DOMPurify.sanitize(value.trim());
 
   // ========================================
+  // 💾 ACCOUNT REGISTRY HELPERS
+  // ========================================
+  // Helper function to get accounts from storage
+  const getAccounts = () => {
+    try {
+      const accountsData = localStorage.getItem("accounts");
+      if (accountsData) {
+        const decoded = decodeURIComponent(escape(atob(accountsData)));
+        return JSON.parse(decoded);
+      }
+    } catch (err) {
+      console.error("Failed to load accounts:", err);
+    }
+    return {};
+  };
+
+  // ========================================
   // 🚀 AUTHENTICATION HANDLER
   // ========================================
-  // Handles user sign-in with comprehensive security measures
+  // Handles user sign-in with proper authentication
   // - Sanitizes all input data
   // - Validates required fields
-  // - Loads existing user data or creates new user
-  // - Persists user data securely
-  // - Navigates to dashboard on success
+  // - Checks if account exists
+  // - Verifies password
+  // - Loads user data and navigates on success
+  // - Shows error messages for failures
   const signIn = () => {
     // ========================================
     // 🔍 INPUT VALIDATION
@@ -48,9 +67,12 @@ const SignIn = () => {
     const safeUsername = sanitize(username);
     const safePassword = sanitize(password);
 
+    // Clear previous errors
+    setError('');
+
     // Ensure all required fields are filled
     if (!safeUsername || !safePassword) {
-      alert('Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
 
@@ -65,44 +87,47 @@ const SignIn = () => {
       setLoading(false);
 
       // ========================================
-      // 💾 USER DATA RETRIEVAL
+      // 💾 ACCOUNT LOOKUP
       // ========================================
-      // Load user data from localStorage with Unicode-safe Base64 decoding
-      let stored = localStorage.getItem("user");
-      let user = null;
-      if (stored) {
-        try {
-          const decoded = decodeURIComponent(escape(atob(stored)));
-          user = JSON.parse(decoded);
-        } catch (err) {
-          console.warn("SecureAI: Failed to decode user data:", err);
-        }
+      // Get accounts from registry
+      const accounts = getAccounts();
+      const account = accounts[safeUsername];
+
+      // ========================================
+      // 🔐 ACCOUNT VALIDATION
+      // ========================================
+      // Check if account exists
+      if (!account) {
+        setError('Account not found. Please create an account first.');
+        return;
       }
 
       // ========================================
-      // 👤 USER CREATION OR VALIDATION
+      // 🔐 PASSWORD VERIFICATION
       // ========================================
-      // Create new user if none exists or username doesn't match
-      if (!user || user.username !== safeUsername) {
-        // New user fallback with secure defaults
-        user = {
-          username: safeUsername,                       // Sanitized username
-          email: "",                                   // Empty email
-          resumeUploaded: false,                       // No resume uploaded
-          skills: [],                                  // Empty skills array
-          lessons: [],                                 // Empty lessons array
-          careerAnswers: {},                          // Empty career answers
-          completedLessons: {},                        // Empty completed lessons
-          loggedIn: true,                              // Authentication flag
-        };
+      // Encode provided password to compare with stored hash
+      const encodedPassword = btoa(unescape(encodeURIComponent(safePassword)));
+      
+      // Verify password matches
+      if (account.passwordHash !== encodedPassword) {
+        setError('Incorrect password. Please try again.');
+        return;
       }
+
+      // ========================================
+      // ✅ AUTHENTICATION SUCCESS
+      // ========================================
+      // Create user object for current session with all account data
+      const user = {
+        ...account,
+        loggedIn: true, // Authentication flag
+      };
 
       // ========================================
       // 🔐 SECURE DATA PERSISTENCE
       // ========================================
-      // Save sanitized user data to context (handles localStorage with proper encoding)
-      const safeUser = { ...user, username: sanitize(user.username) };
-      setUser(safeUser);
+      // Save user to context (handles localStorage with proper encoding)
+      setUser(user);
 
       // Navigate to dashboard after successful authentication
       navigate('/dashboard');
@@ -141,6 +166,22 @@ const SignIn = () => {
         <button className="auth-btn" onClick={signIn} disabled={loading}>
           {loading ? 'Signing In...' : 'Sign In'}
         </button>
+
+        {/* Error message display */}
+        {error && (
+          <div className="auth-error" style={{
+            padding: '0.75rem',
+            borderRadius: '8px',
+            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+            border: '1px solid rgba(239, 68, 68, 0.5)',
+            color: '#f87171',
+            fontSize: '0.9rem',
+            textAlign: 'center',
+            marginTop: '0.5rem'
+          }}>
+            {error}
+          </div>
+        )}
 
         {/* Link to create account page */}
         <Link to="/create-account" className="auth-link">

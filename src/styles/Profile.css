@@ -1,11 +1,15 @@
 /* Profile Page Styles */
 
-/* General Screen Container */
-.screen {
-  background-color: #1a1a2e; /* dark purple/blue background */
+/* General Screen Container - Override for profile to remove white box */
+.screen.profile-container {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  backdrop-filter: none !important;
+  padding: 2rem;
   min-height: 100vh;
   color: white;
-  padding: 2rem;
   font-family: 'Inter', sans-serif;
 }
 

@@ -36,20 +36,41 @@ export async function generateLessons(user) {
           {
             role: "system",
             content: `
-The user has the following skills: ${user.skills?.join(", ") || "none"}.
-Career-related responses: ${JSON.stringify(user.careerAnswers || [])}.
-${user.resumeUploaded ? "" : "Note: the user skipped uploading a resume."}
+You are a career learning platform that generates lessons for ALL industries and professions - not just technology or coding.
+
+User Context:
+- Skills: ${user.skills?.join(", ") || "none"}
+- Career goals and interests: ${JSON.stringify(user.careerAnswers || [])}
+- Resume status: ${user.resumeUploaded ? "Resume uploaded" : "No resume uploaded"}
+
+CRITICAL INSTRUCTIONS:
+1. Lessons must be UNIVERSAL and applicable to ANY field (healthcare, finance, education, marketing, design, hospitality, manufacturing, consulting, law, arts, etc.)
+2. DO NOT assume the user is in tech/coding unless explicitly stated in their career goals or skills
+3. Generate lessons that work for traditional careers, creative fields, service industries, and professional services
+4. Focus on transferable skills: communication, critical thinking, project management, negotiation, presentation, research, analysis, etc.
+5. If the user specified a non-tech field, prioritize lessons relevant to THAT field
+6. Make scenarios realistic for their indicated industry/profession
 
 Task:
-Suggest 3 personalized learning lessons to help the user grow in their chosen career path.
+Generate 3 personalized learning lessons that help the user grow in their chosen career path - whatever field that may be.
 Each lesson must include:
-- title
-- description
-- relevance
-- challenges: array of challenge objects, each with:
-   - scenario
-   - question
-   - hint
+- title (should reflect the actual field/context if known, or be universally applicable)
+- description (explains what will be learned in universal terms)
+- relevance (why this lesson matters for their career - be specific to their field if known)
+- challenges: array of 2-3 challenge objects, each with:
+   - scenario (realistic situation in their field, or universal professional context)
+   - question (actionable task that applies to their profession)
+   - hint (helpful guidance without giving the answer)
+
+Examples of UNIVERSAL lesson topics:
+- Effective Communication and Stakeholder Management
+- Time Management and Prioritization
+- Problem-Solving and Critical Analysis
+- Professional Networking and Relationship Building
+- Presentation Skills and Public Speaking
+- Negotiation and Conflict Resolution
+- Research Methods and Information Analysis
+- Project Planning and Execution
 
 Respond STRICTLY in JSON array format only.
 `,
@@ -115,35 +136,68 @@ Respond STRICTLY in JSON array format only.
     // ========================================
     // Creates default lessons when AI is unavailable
     // - Uses existing user skills if available
-    // - Provides generic problem-solving lesson as ultimate fallback
+    // - Provides universal professional lessons as fallback
     // - Maintains consistent lesson structure
-    const { skills = [] } = user;
-    return skills.length > 0
-      ? skills.slice(0, 3).map((skill) => ({
-          title: `Strengthen ${skill}`,
-          description: `Deepen your knowledge and practical application of ${skill}.`,
-          relevance: `${skill} is one of your core skills; improving it boosts your career opportunities.`,
-          challenges: [
-            {
-              scenario: `You are solving a problem using ${skill}.`,
-              question: `Explain how you would apply ${skill} in a real scenario.`,
-              hint: "Think about practical steps or real-world examples.",
-            },
-          ],
-        }))
-      : [
+    // - Focuses on transferable skills applicable to any field
+    const { skills = [], careerAnswers = {} } = user;
+    
+    // Extract industry context if available
+    const industryInterests = careerAnswers?.industryInterests || [];
+    const firstIndustry = industryInterests?.[0] || "your profession";
+    
+    if (skills.length > 0) {
+      return skills.slice(0, 3).map((skill) => ({
+        title: `Strengthen Your ${skill} Skills`,
+        description: `Deepen your knowledge and practical application of ${skill} in professional settings.`,
+        relevance: `${skill} is a valuable skill that can be applied across many industries and roles.`,
+        challenges: [
           {
-            title: "Problem-Solving Strategies",
-            description: "Practice structured approaches to analyze and solve complex challenges.",
-            relevance: "This skill is universally valuable across all industries.",
-            challenges: [
-              {
-                scenario: "You encounter a complex problem at work.",
-                question: "Describe your approach to solving it.",
-                hint: "Break it into smaller steps and analyze each part.",
-              },
-            ],
+            scenario: `You are in a professional setting where you need to apply ${skill}. Consider the context, stakeholders, and objectives involved.`,
+            question: `Describe a real-world scenario where you would use ${skill} and explain your approach.`,
+            hint: "Think about practical steps, industry best practices, and how this skill creates value in professional contexts.",
           },
-        ];
+        ],
+      }));
+    }
+    
+    // Universal fallback lessons for any profession
+    return [
+      {
+        title: "Effective Problem-Solving Strategies",
+        description: "Practice structured approaches to analyze and solve complex challenges in any professional setting.",
+        relevance: "Problem-solving is universally valuable across all industries and career paths.",
+        challenges: [
+          {
+            scenario: "You encounter a complex challenge or problem in your workplace that requires careful analysis and a strategic solution.",
+            question: "Describe your step-by-step approach to understanding, analyzing, and solving this problem.",
+            hint: "Break the problem into smaller components, identify root causes, consider multiple perspectives, and evaluate potential solutions.",
+          },
+        ],
+      },
+      {
+        title: "Professional Communication and Stakeholder Management",
+        description: "Develop skills in clear communication, active listening, and managing relationships with colleagues, clients, and stakeholders.",
+        relevance: "Strong communication skills are essential for success in any field and help build trust and collaboration.",
+        challenges: [
+          {
+            scenario: "You need to communicate an important message to multiple stakeholders who have different perspectives, priorities, and communication styles.",
+            question: "How would you tailor your communication approach to ensure each stakeholder understands and engages with your message?",
+            hint: "Consider audience analysis, message framing, communication channels, and follow-up strategies.",
+          },
+        ],
+      },
+      {
+        title: "Time Management and Prioritization",
+        description: "Learn to effectively manage your time, prioritize tasks, and balance competing demands in professional settings.",
+        relevance: "Efficient time management improves productivity and work-life balance in any career.",
+        challenges: [
+          {
+            scenario: "You have multiple important projects, deadlines, and responsibilities competing for your attention with limited time available.",
+            question: "How would you prioritize your tasks, manage your schedule, and ensure critical work gets completed on time?",
+            hint: "Consider urgency vs. importance, breaking down large tasks, delegation opportunities, and realistic time estimates.",
+          },
+        ],
+      },
+    ];
   }
 }

@@ -13,11 +13,13 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { UserProvider, useUser } from "./Context/UserContext";
+import { ThemeProvider } from "./Context/ThemeContext";
 
 // ========================================
 // 📦 COMPONENT IMPORTS
 // ========================================
 // All page components for the application routing system
+import HomePage from "./components/HomePage";       // Landing page
 import SignIn from "./components/SignIn";           // Authentication entry point
 import CreateAccount from "./components/CreateAccount"; // User registration
 import Upload from "./components/Upload";          // Resume upload (optional)
@@ -60,7 +62,7 @@ function ProtectedRoute({ children }) {
   
   // If user exists, render the protected component
   // Otherwise, redirect to sign-in page
-  return user ? children : <Navigate to="/" replace />;
+  return user ? children : <Navigate to="/signin" replace />;
 }
 
 // ========================================
@@ -111,7 +113,8 @@ function AnimatedRoutes() {
         {/* ========================================
             🌐 PUBLIC ROUTES (No Authentication Required)
             ======================================== */}
-        <Route path="/" element={<MotionWrapper><SignIn /></MotionWrapper>} />
+        <Route path="/" element={<MotionWrapper><HomePage /></MotionWrapper>} />
+        <Route path="/signin" element={<MotionWrapper><SignIn /></MotionWrapper>} />
         <Route path="/create-account" element={<MotionWrapper><CreateAccount /></MotionWrapper>} />
         <Route path="/upload" element={<MotionWrapper><Upload /></MotionWrapper>} />
         <Route path="/career" element={<MotionWrapper><Career /></MotionWrapper>} />
@@ -163,7 +166,7 @@ function AnimatedRoutes() {
         {/* ========================================
             🔄 FALLBACK ROUTE
             ======================================== */}
-        {/* Redirects any unmatched routes to the sign-in page */}
+        {/* Redirects any unmatched routes to the homepage */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
@@ -179,8 +182,10 @@ function AnimatedRoutes() {
 // - Provides the foundation for all user interactions and data flow
 export default function App() {
   return (
-    <UserProvider>
-      <AnimatedRoutes />
-    </UserProvider>
+    <ThemeProvider>
+      <UserProvider>
+        <AnimatedRoutes />
+      </UserProvider>
+    </ThemeProvider>
   );
 }

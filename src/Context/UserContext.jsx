@@ -40,6 +40,7 @@ export const UserProvider = ({ children }) => {
   // - Uses Base64 decoding for basic data obfuscation
   // - Handles corrupted or missing data gracefully
   // - Sets loading state to false when complete
+  // - If session data exists, validates against accounts registry
   useEffect(() => {
     try {
       const stored = localStorage.getItem("user");
@@ -47,7 +48,37 @@ export const UserProvider = ({ children }) => {
         // Decode Base64-encoded user data with Unicode support
         const decoded = decodeURIComponent(escape(atob(stored)));
         const parsed = JSON.parse(decoded);
-        setUserState(parsed);
+        
+        // If user is logged in, verify account still exists in registry
+        if (parsed.loggedIn && parsed.username) {
+          try {
+            const accountsData = localStorage.getItem("accounts");
+            if (accountsData) {
+              const accountsDecoded = decodeURIComponent(escape(atob(accountsData)));
+              const accounts = JSON.parse(accountsDecoded);
+              
+              // If account exists, merge with latest registry data
+              if (accounts[parsed.username]) {
+                const accountData = accounts[parsed.username];
+                setUserState({
+                  ...accountData,
+                  loggedIn: true,
+                });
+              } else {
+                // Account not found, clear session
+                localStorage.removeItem("user");
+                setUserState(null);
+              }
+            } else {
+              setUserState(parsed);
+            }
+          } catch (err) {
+            console.error("SecureAI: Failed to validate account:", err);
+            setUserState(parsed);
+          }
+        } else {
+          setUserState(parsed);
+        }
       }
     } catch (err) {
       console.error("SecureAI: Failed to parse user from localStorage:", err);
@@ -57,11 +88,42 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   // ========================================
+  // 💾 ACCOUNT REGISTRY SYNC HELPER
+  // ========================================
+  // Syncs user data with the accounts registry for persistent storage
+  const syncAccountRegistry = (userData) => {
+    if (!userData || !userData.username) return;
+    
+    try {
+      // Get accounts registry
+      const accountsData = localStorage.getItem("accounts");
+      if (accountsData) {
+        const decoded = decodeURIComponent(escape(atob(accountsData)));
+        const accounts = JSON.parse(decoded);
+        
+        // Update the account data (excluding loggedIn flag which is session-only)
+        const { loggedIn, ...accountData } = userData;
+        accounts[userData.username] = {
+          ...accounts[userData.username],
+          ...accountData,
+        };
+        
+        // Save back to registry
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(accounts))));
+        localStorage.setItem("accounts", encoded);
+      }
+    } catch (err) {
+      console.error("SecureAI: Failed to sync account registry:", err);
+    }
+  };
+
+  // ========================================
   // 🔐 SECURE USER STATE UPDATER
   // ========================================
   // Safely updates user state with automatic localStorage persistence
   // - Supports both direct values and functional updates
   // - Automatically encodes data to Base64 before storage
+  // - Syncs with accounts registry for persistent storage
   // - Handles null values by removing from localStorage
   // - Includes comprehensive error handling
   const setUser = (value) => {
@@ -77,6 +139,9 @@ export const UserProvider = ({ children }) => {
           // Encode user data to Base64 with Unicode support before storing
           const jsonString = JSON.stringify(next);
           localStorage.setItem("user", btoa(unescape(encodeURIComponent(jsonString))));
+          
+          // Sync with accounts registry for persistent storage
+          syncAccountRegistry(next);
         }
       } catch (err) {
         console.error("SecureAI: Failed to save user:", err);
@@ -102,7 +167,10 @@ export const UserProvider = ({ children }) => {
       resumeUploaded: data.resumeUploaded || false,    // Resume upload status
       resumeSkills: data.resumeSkills || [],           // Skills extracted from resume
       completedLessons: data.completedLessons || {},  // Progress tracking: skill -> lesson -> level
-      skills: data.skills || [],                       // User's skill list
+      savedLessons: data.savedLessons || {},            // Saved lesson data: lessonTitle -> {lesson, skill, challenges}
+      availableSkills: data.availableSkills || [],       // Available skills for skill tree (persisted)
+      skillLessons: data.skillLessons || {},            // Saved lessons by skill: skill -> [lessons]
+      skills: data.skills || [],                       // User's skill list (completed skills only)
       lessons: data.lessons || [],                     // Available lessons
       careerAnswers: data.careerAnswers || {},        // Career questionnaire responses
       loggedIn: true,                                  // Authentication flag

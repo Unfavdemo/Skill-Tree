@@ -11,7 +11,7 @@
 // - Gamified learning with progress tracking
 
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useUser } from "../Context/UserContext";
 import { motion } from "framer-motion";
 import { generateLessonChallenge } from "../utils/generateLessonChallenge";
@@ -23,14 +23,32 @@ export default function LessonPage() {
   // 🎯 HOOKS AND STATE MANAGEMENT
   // ========================================
   const { state } = useLocation();                      // Get lesson data from navigation
+  const { title: urlTitle } = useParams();              // Get lesson title from URL
   const navigate = useNavigate();                      // React Router navigation hook
   const { user, setUser, loading } = useUser();       // Access to global user context
 
   // ========================================
   // 📊 LESSON DATA
   // ========================================
-  const lesson = state?.lesson;                        // Current lesson object
-  const skill = state?.skill;                          // Current skill being learned
+  // Try to load lesson from state, then from savedLessons, or use URL param
+  const getLessonData = () => {
+    if (state?.lesson && state?.skill) {
+      return { lesson: state.lesson, skill: state.skill };
+    }
+    
+    // Try to load from saved lessons
+    const decodedTitle = urlTitle ? decodeURIComponent(urlTitle) : null;
+    if (decodedTitle && user?.savedLessons?.[decodedTitle]) {
+      const saved = user.savedLessons[decodedTitle];
+      return { lesson: saved.lesson, skill: saved.skill };
+    }
+    
+    return null;
+  };
+
+  const lessonData = getLessonData();
+  const lesson = lessonData?.lesson;
+  const skill = lessonData?.skill;
 
   // ========================================
   // 🎮 GAME STATE MANAGEMENT
@@ -76,6 +94,28 @@ export default function LessonPage() {
         }
 
         setChallenges(generatedChallenges);
+
+        // ========================================
+        // 💾 SAVE LESSON DATA
+        // ========================================
+        // Save lesson and challenges so user can return to it later
+        if (lesson && skill) {
+          setUser((prev) => {
+            const safeTitle = DOMPurify.sanitize(lesson.title);
+            return {
+              ...prev,
+              savedLessons: {
+                ...prev.savedLessons,
+                [safeTitle]: {
+                  lesson: lesson,
+                  skill: skill,
+                  challenges: generatedChallenges,
+                  lastAccessed: new Date().toISOString(),
+                },
+              },
+            };
+          });
+        }
       } catch (err) {
         console.error("SecureAI: Failed to generate lesson challenges", err);
         // Fallback challenge if AI generation fails
@@ -87,7 +127,13 @@ export default function LessonPage() {
       }
     };
 
-    fetchChallenges();
+    // Check if we have saved challenges first
+    const savedChallenges = lesson && user?.savedLessons?.[lesson.title]?.challenges;
+    if (savedChallenges && savedChallenges.length > 0) {
+      setChallenges(savedChallenges);
+    } else {
+      fetchChallenges();
+    }
   }, [lesson, user, skill]);
 
   // ========================================
@@ -217,8 +263,27 @@ export default function LessonPage() {
   // 🏆 COMPLETE LESSON
   // ========================================
   // Handles lesson completion and navigation
+  // Adds skill to user.skills when lesson is completed
   const completeLesson = () => {
     setGameState({ completed: true });
+    
+    // Add skill to user.skills if not already present
+    if (skill && lesson) {
+      setUser((prev) => {
+        const safeSkill = DOMPurify.sanitize(skill);
+        const currentSkills = prev.skills || [];
+        
+        // Only add if skill is not already in the list
+        if (!currentSkills.includes(safeSkill)) {
+          return {
+            ...prev,
+            skills: [...currentSkills, safeSkill],
+          };
+        }
+        return prev;
+      });
+    }
+    
     setTimeout(() => navigate("/dashboard"), 2500);
   };
 
@@ -270,7 +335,19 @@ export default function LessonPage() {
                 {isEvaluating ? "Evaluating..." : "Submit Answer"}
               </button>
               <button 
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white" 
+                className="px-4 py-2 rounded-lg text-white" 
+                style={{
+                  background: 'linear-gradient(90deg, #7c3aed, #00d8ff)',
+                  boxShadow: '0 0 20px rgba(124, 58, 237, 0.6)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'linear-gradient(90deg, #00d8ff, #7c3aed)';
+                  e.target.style.boxShadow = '0 0 35px rgba(0, 216, 255, 0.8)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'linear-gradient(90deg, #7c3aed, #00d8ff)';
+                  e.target.style.boxShadow = '0 0 20px rgba(124, 58, 237, 0.6)';
+                }}
                 onClick={() => setFeedback(`💡 Hint: ${currentChallenge.hint}`)}
               >
                 Need Hint

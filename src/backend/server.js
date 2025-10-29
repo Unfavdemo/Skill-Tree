@@ -60,20 +60,41 @@ export default function CareerLessons({ resumeUploaded, skills = [], careerAnswe
             messages: [
               {
                 role: "system",
-                content: `The user has the following skills: ${skills.join(", ")}.
-                  Career-related responses: ${JSON.stringify(careerAnswers)}.
-                  ${resumeUploaded ? "" : "Note: the user skipped uploading a resume."}
-                  
-                  Task:
-                  Suggest 3 personalized learning lessons to help the user grow in their chosen career path.
-                  At least one lesson MUST be directly tied to the user's listed skills.
-                  Use the career-related responses as context to ensure recommendations fit the user's interests and goals.
-                  Avoid repeating overly generic topics unless explicitly relevant.
+                content: `You are a career learning platform that generates lessons for ALL industries and professions - not just technology or coding.
 
-                  Format the response strictly as a JSON array, where each item has:
-                    - "title": short name of the lesson
-                    - "description": concise explanation of what will be learned
-                    - "relevance": brief note on why this lesson matters for the user's career development
+User Context:
+- Skills: ${skills.join(", ") || "none"}
+- Career goals and interests: ${JSON.stringify(careerAnswers)}
+- Resume status: ${resumeUploaded ? "Resume uploaded" : "No resume uploaded"}
+
+CRITICAL INSTRUCTIONS:
+1. Lessons must be UNIVERSAL and applicable to ANY field (healthcare, finance, education, marketing, design, hospitality, manufacturing, consulting, law, arts, etc.)
+2. DO NOT assume the user is in tech/coding unless explicitly stated in their career goals or skills
+3. Generate lessons that work for traditional careers, creative fields, service industries, and professional services
+4. Focus on transferable skills: communication, critical thinking, project management, negotiation, presentation, research, analysis, etc.
+5. If the user specified a non-tech field, prioritize lessons relevant to THAT field
+6. Make scenarios realistic for their indicated industry/profession
+
+Task:
+Generate 3 personalized learning lessons that help the user grow in their chosen career path - whatever field that may be.
+At least one lesson should be directly tied to the user's listed skills when available.
+Use career-related responses as context to ensure recommendations fit the user's interests and goals.
+Each lesson must include:
+- "title": short name that reflects their field/context if known, or be universally applicable
+- "description": concise explanation of what will be learned in universal terms
+- "relevance": brief note on why this lesson matters for their career - be specific to their field if known
+
+Examples of UNIVERSAL lesson topics:
+- Effective Communication and Stakeholder Management
+- Time Management and Prioritization
+- Problem-Solving and Critical Analysis
+- Professional Networking and Relationship Building
+- Presentation Skills and Public Speaking
+- Negotiation and Conflict Resolution
+- Research Methods and Information Analysis
+- Project Planning and Execution
+
+Format the response strictly as a JSON array, where each item has: title, description, and relevance.
                 `,
               },
             ],
@@ -107,27 +128,33 @@ export default function CareerLessons({ resumeUploaded, skills = [], careerAnswe
         // 🔄 FALLBACK LESSON GENERATION
         // ========================================
         // Creates default lessons when AI is unavailable
+        // - Uses existing user skills if available
+        // - Provides universal professional lessons as fallback
+        // - Focuses on transferable skills applicable to any field
+        const industryInterests = careerAnswers?.industryInterests || [];
+        const firstIndustry = industryInterests?.[0] || "your profession";
+        
         const fallback = skills.length > 0
           ? skills.slice(0, 3).map(skill => ({
-              title: `Strengthen ${skill}`,
-              description: `Deepen your knowledge and practical application of ${skill}.`,
-              relevance: `${skill} is one of your core skills, and improving it increases your career opportunities.`,
+              title: `Strengthen Your ${skill} Skills`,
+              description: `Deepen your knowledge and practical application of ${skill} in professional settings.`,
+              relevance: `${skill} is a valuable skill that can be applied across many industries and roles.`,
             }))
           : [
               {
-                title: "Problem-Solving Strategies",
-                description: "Practice structured approaches to analyze and solve complex challenges.",
-                relevance: "This skill is universally valuable across all industries.",
+                title: "Effective Problem-Solving Strategies",
+                description: "Practice structured approaches to analyze and solve complex challenges in any professional setting.",
+                relevance: "Problem-solving is universally valuable across all industries and career paths.",
               },
               {
-                title: "Professional Communication",
-                description: "Learn how to express ideas clearly and collaborate effectively.",
-                relevance: "Strong communication supports success in any career path.",
+                title: "Professional Communication and Stakeholder Management",
+                description: "Develop skills in clear communication, active listening, and managing relationships with colleagues, clients, and stakeholders.",
+                relevance: "Strong communication skills are essential for success in any field and help build trust and collaboration.",
               },
               {
-                title: "Continuous Learning Mindset",
-                description: "Build habits for staying adaptable and quickly learning new skills.",
-                relevance: "Adaptability ensures long-term growth in evolving industries.",
+                title: "Time Management and Prioritization",
+                description: "Learn to effectively manage your time, prioritize tasks, and balance competing demands in professional settings.",
+                relevance: "Efficient time management improves productivity and work-life balance in any career.",
               },
             ];
 

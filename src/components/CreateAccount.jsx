@@ -11,7 +11,7 @@
 // - Error handling for failed account creation
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useUser } from "../Context/UserContext";
 import DOMPurify from "dompurify";
 
@@ -35,12 +35,42 @@ export default function CreateAccount() {
   });
 
   const [resumeFileName, setResumeFileName] = useState(""); // Track uploaded file name
+  const [error, setError] = useState(""); // Error message state
 
   // ========================================
   // 🛡️ INPUT SANITIZATION HELPER
   // ========================================
   // Centralized sanitizer for all user inputs to prevent XSS attacks
   const sanitize = (value) => DOMPurify.sanitize(value.trim());
+
+  // ========================================
+  // 💾 ACCOUNT REGISTRY HELPERS
+  // ========================================
+  // Helper functions to manage account storage
+  const getAccounts = () => {
+    try {
+      const accountsData = localStorage.getItem("accounts");
+      if (accountsData) {
+        const decoded = decodeURIComponent(escape(atob(accountsData)));
+        return JSON.parse(decoded);
+      }
+    } catch (err) {
+      console.error("Failed to load accounts:", err);
+    }
+    return {};
+  };
+
+  const saveAccount = (username, accountData) => {
+    try {
+      const accounts = getAccounts();
+      accounts[username] = accountData;
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(accounts))));
+      localStorage.setItem("accounts", encoded);
+    } catch (err) {
+      console.error("Failed to save account:", err);
+      throw err;
+    }
+  };
 
   // ========================================
   // 📝 FORM INPUT HANDLERS
@@ -97,6 +127,7 @@ export default function CreateAccount() {
   // - Navigates to career questionnaire
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
 
     try {
       // ========================================
@@ -104,7 +135,19 @@ export default function CreateAccount() {
       // ========================================
       // Ensure all required fields are filled
       if (!form.username || !form.email || !form.password) {
-        alert("All fields are required.");
+        setError("All fields are required.");
+        return;
+      }
+
+      const safeUsername = sanitize(form.username);
+      const safeEmail = sanitize(form.email);
+
+      // ========================================
+      // 🔍 CHECK FOR DUPLICATE USERNAME
+      // ========================================
+      const accounts = getAccounts();
+      if (accounts[safeUsername]) {
+        setError("Username already exists. Please choose a different username.");
         return;
       }
 
@@ -115,24 +158,38 @@ export default function CreateAccount() {
       const encodedPassword = btoa(unescape(encodeURIComponent(form.password)));
 
       // ========================================
-      // 👤 USER OBJECT CREATION
+      // 👤 ACCOUNT OBJECT CREATION
       // ========================================
-      // Create new user with sanitized data and default values
-      const newUser = {
-        username: sanitize(form.username),              // Sanitized username
-        email: sanitize(form.email),                    // Sanitized email
-        passwordHash: encodedPassword,                  // Encoded password
-        loggedIn: true,                                 // Authentication flag
-        resumeUploaded: form.resumeUploaded,           // Resume upload status
-        resumeSkills: form.resumeSkills,                // Extracted skills
-        careerAnswers: [],                              // Empty career answers
-        lessons: [],                                    // Empty lessons array
-        skills: [],                                     // Empty skills array
+      // Create new account with sanitized data and default values
+      const accountData = {
+        username: safeUsername,
+        email: safeEmail,
+        passwordHash: encodedPassword,
+        resumeUploaded: form.resumeUploaded,
+        resumeSkills: form.resumeSkills,
+        careerAnswers: {},
+        lessons: [],
+        skills: [],
+        completedLessons: {},
+        savedLessons: {},
+        availableSkills: [], // Will be generated after career quiz
+        skillLessons: {}, // Lessons saved by skill
       };
 
       // ========================================
-      // 💾 DATA PERSISTENCE
+      // 💾 SAVE ACCOUNT TO REGISTRY
       // ========================================
+      saveAccount(safeUsername, accountData);
+
+      // ========================================
+      // 👤 USER OBJECT CREATION (for current session)
+      // ========================================
+      // Create user object for current session
+      const newUser = {
+        ...accountData,
+        loggedIn: true, // Authentication flag
+      };
+
       // Update global user context (already handles localStorage with proper encoding)
       setUser(newUser);
 
@@ -143,7 +200,7 @@ export default function CreateAccount() {
       // 🚨 ERROR HANDLING
       // ========================================
       console.error("SecureAI: Account creation failed", err);
-      alert("⚠️ Unable to create your account securely. Please retry.");
+      setError("⚠️ Unable to create your account. Please try again.");
     }
   };
 
@@ -191,7 +248,33 @@ export default function CreateAccount() {
           <button type="submit" className="auth-btn">
             Create Account
           </button>
+
+          {/* Error message display */}
+          {error && (
+            <div className="auth-error" style={{
+              padding: '0.75rem',
+              borderRadius: '8px',
+              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+              border: '1px solid rgba(239, 68, 68, 0.5)',
+              color: '#f87171',
+              fontSize: '0.9rem',
+              textAlign: 'center',
+              marginTop: '0.5rem'
+            }}>
+              {error}
+            </div>
+          )}
         </form>
+
+        {/* Link back to sign in page */}
+        <Link to="/signin" className="auth-link">
+          Back to Sign In
+        </Link>
+
+        {/* Footer with copyright */}
+        <div className="auth-footer">
+          © 2025 SkillTree. Start building your skills today.
+        </div>
       </div>
     </div>
   );
