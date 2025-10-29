@@ -489,6 +489,17 @@ html, body {
   z-index: 1;
 }
 
+/* Ensure tree connections SVG uses CSS instead of inline styles */
+.tree-connections svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
 .tree-connections line {
   transition: stroke 0.3s ease;
 }
@@ -868,6 +879,28 @@ textarea:focus-visible {
   animation: floatScreen 6s ease-in-out infinite;
 }
 
+/* Career progress bar */
+.career-progress {
+  width: 100%;
+  height: 8px;
+  background: rgba(50, 30, 120, 0.6);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.career-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #00d8ff);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Career form full width */
+.career-screen form {
+  width: 100% !important;
+}
+
 .career-question {
   display: flex;
   flex-direction: column;
@@ -953,6 +986,37 @@ textarea:focus-visible {
    🎮 LESSON PAGE
 ========================== */
 /* lesson-page.css */
+/* Spaced out sections for better visual separation */
+.lesson-page.screen {
+  padding: 1.5rem !important;
+  gap: 1.5rem !important;
+}
+
+.lesson-page .screen-header {
+  margin-bottom: 1.5rem !important;
+  gap: 0.75rem;
+}
+
+.lesson-page .bg-purple-900\/30 {
+  padding: 1.5rem !important;
+}
+
+/* Scenario section spacing - large gap after scenario */
+.lesson-page .bg-purple-900\/30 > p.text-gray-300 {
+  margin-bottom: 2.5rem !important;
+}
+
+/* Challenge heading spacing */
+.lesson-page .bg-purple-900\/30 > h4 {
+  margin-top: 0 !important;
+  margin-bottom: 0.75rem !important;
+}
+
+/* Challenge text spacing - large gap after challenge text */
+.lesson-page .bg-purple-900\/30 > p.text-gray-200 {
+  margin-bottom: 2rem !important;
+}
+
 .lesson-page textarea {
   width: 100%;
   padding: 0.75rem;
@@ -962,11 +1026,100 @@ textarea:focus-visible {
   font-size: 1rem;
   resize: vertical;
   transition: all 0.2s ease;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0 !important;
 }
+
 .lesson-page textarea:focus {
   outline: none;
   box-shadow: 0 0 0 2px #a78bfa;
   background-color: rgba(76, 29, 149, 0.6);
+}
+
+/* Buttons section spacing - gap after textarea */
+.lesson-page .flex.gap-3 {
+  gap: 1rem !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Ensure all buttons on lesson page have consistent spacing and styling */
+.lesson-page button {
+  margin: 0 !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  flex-shrink: 0 !important;
+  min-height: 44px !important; /* Consistent button height */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Header button spacing */
+.lesson-page .screen-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+.lesson-page .screen-header button {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+/* Action buttons container - ensure even spacing */
+.lesson-page .flex.gap-3 > button {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+}
+
+/* Hint button styling - replaces inline styles */
+.lesson-page .hint-button {
+  background: linear-gradient(90deg, #7c3aed, #00d8ff) !important;
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.6) !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 12px !important;
+  color: #fff !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  font-weight: 600 !important;
+}
+
+.lesson-page .hint-button:hover {
+  background: linear-gradient(90deg, #00d8ff, #7c3aed) !important;
+  box-shadow: 0 0 35px rgba(0, 216, 255, 0.8) !important;
+}
+
+/* Feedback section spacing - large gap after buttons */
+.lesson-page [class*="mt-4"],
+.lesson-page .mt-4 {
+  margin-top: 2.5rem !important;
+  margin-bottom: 0 !important;
+}
+
+.lesson-page [class*="p-4"] {
+  padding: 1rem !important;
+}
+
+/* Override for nested feedback boxes */
+.lesson-page .bg-purple-900\/30 [class*="p-4"] {
+  padding: 1rem !important;
+}
+
+/* Remove conflicting margin overrides - handled by specific selectors above */
+
+.lesson-page [class*="mb-2"] {
+  margin-bottom: 0.75rem !important;
+}
+
+.lesson-page [class*="mb-6"] {
+  margin-bottom: 1.5rem !important;
 }
 
 /* ========================================
@@ -1064,58 +1217,157 @@ textarea:focus-visible {
 }
 
 /* ==========================
-   🔘 BUTTON GROUPS (Even Spacing)
+   🔘 BUTTON GROUPS (Even Spacing - Global)
 ========================== */
-/* Ensures all button groups have consistent, even spacing */
+/* Global rule: Remove all margins from buttons to ensure gap-based spacing works */
+button,
+.auth-btn,
+.career-btn,
+.back-btn,
+.profile-btn,
+.homepage-btn,
+.homepage-btn-nav {
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Universal rule: All button containers should use consistent 1rem gap */
+/* Target button-specific containers without affecting general form spacing */
+.button-group,
+.button-container,
+.actions-container,
+.navbar-actions,
+.homepage-cta,
+.footer-cta-buttons,
+.dashboard-button-group,
+.profile-actions,
+.flex.items-center:has(> button),
+.flex:has(> button + button),
+.flex:has(> .auth-btn + .auth-btn) {
+  gap: 1rem !important;
+}
+
+/* Override Tailwind gap classes for button containers - use multiple approaches for compatibility */
+/* Direct class targeting for known button containers with maximum specificity */
+html .button-group,
+html .dashboard-button-group,
+html .flex.items-center.dashboard-button-group,
+html .flex.dashboard-button-group,
+html .navbar-actions,
+html .homepage-cta,
+html .footer-cta-buttons,
+html .profile-actions,
+html .screen-header,
+html .auth-box:has(> button:only-of-type ~ button),
+html form:has(> button:only-of-type ~ button) {
+  gap: 1rem !important;
+}
+
+/* Target flex containers with buttons - must be very specific to override Tailwind */
+html body .flex.gap-3:has(> button),
+html body .flex.gap-3:has(> .auth-btn),
+html body .flex.gap-3:has(> .career-btn),
+html body .flex.gap-3:has(> .profile-btn),
+html body .flex.gap-3:has(> .homepage-btn),
+html body .flex.items-center.gap-3:has(> button),
+html body .flex.items-center.gap-3:has(> .auth-btn),
+html body .flex.gap-6:has(> button),
+html body .flex.gap-6:has(> .auth-btn),
+html body .flex.gap-6:has(> .career-btn),
+html body .flex.gap-6:has(> .profile-btn) {
+  gap: 1rem !important;
+}
+
+/* Override Tailwind's gap utility classes for button containers - maximum specificity */
+html body .flex.items-center.dashboard-button-group[class*="gap"],
+html body .dashboard-button-group[class*="gap"],
+html body .navbar-actions[class*="gap"],
+html body .homepage-cta[class*="gap"],
+html body .flex.gap-3.dashboard-button-group,
+html body .flex.gap-6.dashboard-button-group {
+  gap: 1rem !important;
+}
+
+/* Ensure all button containers use flex with consistent spacing */
+.flex > button,
+.flex > .auth-btn,
+.flex > .career-btn,
+.flex > .back-btn,
+.flex > .profile-btn,
+.flex > .homepage-btn,
+.flex > a[class*="btn"],
+button + button,
+.auth-btn + .auth-btn,
+button + .auth-btn,
+.auth-btn + button,
+.career-btn + button,
+button + .career-btn,
+.profile-btn + button,
+button + .profile-btn {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Specific button group selectors for consistent spacing */
 .button-group,
 .flex.items-center.gap-3,
 .flex.gap-3,
+.flex.justify-between,
+.flex.justify-center,
 .actions-container,
-button + button {
-  gap: 1rem !important;                           /* Consistent 1rem gap */
+.navbar-actions,
+.homepage-cta,
+.footer-cta-buttons {
+  display: flex !important;
+  gap: 1rem !important;
+  align-items: center !important;
 }
 
-/* Ensure buttons in flex containers have even spacing */
+/* Buttons in all flex containers */
 .flex button,
+.flex .auth-btn,
+.flex .career-btn,
+.flex .back-btn,
 .profile-actions button,
+.homepage-cta button,
 .homepage-cta a,
 .homepage-btn,
-.footer-cta-buttons a {
-  margin: 0;                                       /* Remove default margins */
+.footer-cta-buttons a,
+.footer-cta-buttons button,
+.navbar-actions button,
+.navbar-actions a {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
 }
 
-/* Button containers with even spacing */
-.flex.items-center.gap-3 button,
-.flex.gap-3 button,
-.button-group {
-  gap: 1rem !important;                             /* Spacing between buttons */
-}
-
-.button-group button {
-  flex: 0 0 auto;                                  /* Don't grow or shrink */
-  margin-left: 0;                                  /* No left margin */
-  margin-right: 0;                                 /* No right margin */
-}
-
-/* Dashboard header button spacing */
-.dashboard-button-group {
-  gap: 5rem !important;                             /* Increased spacing for dashboard buttons */
-}
-
-.dashboard-button-group button {
-  flex: 0 0 auto;                                  /* Don't grow or shrink */
-  margin-left: 0;                                  /* No left margin */
-  margin-right: 0;                                 /* No right margin */
-}
-
-/* Special case for header buttons */
-.screen-header .flex.items-center.gap-3 {
+/* Dashboard header button spacing - ensure even spacing */
+.dashboard-button-group,
+.flex.items-center.dashboard-button-group,
+.flex.dashboard-button-group,
+.screen-header .dashboard-button-group {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
   gap: 1rem !important;
 }
 
-/* Lesson page button groups */
-.lesson-page .flex.gap-3 {
+.dashboard-button-group button,
+.dashboard-button-group .auth-btn,
+.flex.items-center.dashboard-button-group button,
+.flex.items-center.dashboard-button-group .auth-btn {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+}
+
+/* Screen headers with buttons */
+.screen-header {
   gap: 1rem !important;
+}
+
+.screen-header button,
+.screen-header .auth-btn {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
 }
 
 .profile-btn {
@@ -1251,6 +1503,42 @@ button + button {
 .profile-lessons strong {
   color: #f6f6ff;                                 /* Brighter text for emphasis */
   font-weight: 600;                               /* Semi-bold */
+}
+
+/* Profile component text colors - replaces inline styles */
+.profile-text-muted,
+.profile-empty-message {
+  color: #9ca3af !important;
+}
+
+.profile-lesson-title {
+  color: #b990ff !important;
+}
+
+.profile-lesson-skill {
+  color: #d3d8ff !important;
+  margin-left: 0.5rem !important;
+}
+
+.profile-lesson-level {
+  color: #9ca3af !important;
+  margin-left: 0.5rem !important;
+}
+
+/* Profile lesson item styles - replaces inline styles */
+.profile-lesson-item {
+  cursor: pointer !important;
+  padding: 0.75rem !important;
+  margin-bottom: 0.5rem !important;
+  border-radius: 8px !important;
+  background: rgba(185, 144, 255, 0.1) !important;
+  transition: all 0.2s ease !important;
+  border: 1px solid rgba(185, 144, 255, 0.2) !important;
+}
+
+.profile-lesson-item:hover {
+  background: rgba(185, 144, 255, 0.2) !important;
+  border-color: rgba(185, 144, 255, 0.4) !important;
 }
 
 /* Feedback Messages */
