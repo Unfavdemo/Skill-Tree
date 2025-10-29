@@ -1,94 +1,129 @@
 SkillTree — Gamified Career Learning Platform
 
-SkillTree is a front-end learning platform built with React + Vite that helps users explore career paths, upload resumes, and develop practical skills through AI-generated, gamified lessons.
+SkillTree is a front‑end learning platform built with React and Vite that helps users explore career paths, upload resumes, and develop practical skills through AI‑generated, gamified lessons.
+
+Contents
+
+- Overview
+- Features
+- Architecture & Tech Stack
+- Project Structure
+- Getting Started
+- Available Scripts
+- Environment Variables
+- Application Routing
+- Deployment (Vercel)
+- Security Notes
+- Contributing
+- Roadmap
+- Author & License
+
+Overview
+
+SkillTree guides learners through a smart onboarding flow (sign in, career quiz, optional resume upload) to generate a personalized skill tree. Each node represents an interactive lesson with scenarios, challenges, and progress tracking. Completing nodes unlocks new branches, enabling a gamified progression experience.
 
 Features
-Smart Onboarding
 
-Sign In / Create Account using localStorage for authentication.
+- Smart Onboarding
+  - Sign In / Create Account stored via localStorage
+  - Career Quiz to identify interests and goals
+  - Optional Resume Upload to customize the learning path
+- Gamified Learning
+  - Visual skill tree populated with AI‑generated lessons
+  - Interactive challenges and real‑world scenarios
+  - Skill progress tracking and gated unlocks
+- AI‑Generated Lessons
+  - Generated client‑side from quiz answers and (optional) resume data
+  - Logic implemented in `src/utils/generateLessons.js`
 
-Career Quiz identifies user interests and learning goals.
+Architecture & Tech Stack
 
-Resume Upload (optional) customizes the learning path and skill tree.
-
-Dashboard displays a visual Skill Tree populated with AI-generated lessons.
-
-Gamified Learning
-
-Each lesson node represents a specific skill or challenge.
-
-Lessons include:
-
-Real-world scenarios
-
-Interactive challenges
-
-Skill progress tracking
-
-Completing lessons unlocks new branches in the Skill Tree.
-
-AI-Generated Lessons
-
-Lessons are generated dynamically based on quiz answers and resume data.
-
-The generation logic runs client-side through generateLessons.js.
-
-Content adapts to different career paths and skill levels (not limited to cybersecurity).
+- Frontend: React (Vite)
+- Router: React Router
+- State: React Context API
+- Styling: CSS Modules or Tailwind CSS
+- Utilities: DOMPurify, Framer Motion, Radix UI (Progress)
 
 Project Structure
 
+```
 SkillTree/
+  public/
+    vite.svg
+  src/
+    App.jsx                // Routing logic
+    main.jsx               // App entry point
+    index.css              // Base styles
+    components/
+      SignIn.jsx
+      CreateAccount.jsx
+      Career.jsx
+      Upload.jsx
+      Dashboard.jsx
+      SkipDashboard.jsx
+      SkillDashboard.jsx
+      LessonPage.jsx
+      styles/              // Component-specific CSS files
+    Context/
+      UserContext.jsx      // Global user state and lesson tracking
+    utils/
+      generateLessons.js   // Frontend AI lesson generator
+  .env                     // Environment variables (if used)
+  package.json
+  vite.config.js
+  vercel.json
+```
 
-public/
+Getting Started
 
-vite.svg
+Prerequisites
 
-src/
+- Node.js 18+ and npm 9+
 
-App.jsx — Routing logic
+Install dependencies
 
-main.jsx — App entry point
+```
+npm install
+```
 
-index.css — Base styles
+Run the development server
 
-components/
+```
+npm run dev
+```
 
-SignIn.jsx
+Open in browser
 
-CreateAccount.jsx
+```
+http://localhost:5173
+```
 
-Career.jsx
+Onboarding flow (suggested)
 
-Upload.jsx
+1. Sign In / Create Account
+2. Career Quiz
+3. (Optional) Upload Resume
+4. Explore your personalized Dashboard (Skill Tree)
 
-Dashboard.jsx
+Available Scripts
 
-SkipDashboard.jsx
+- `npm run dev`: Start Vite dev server
+- `npm run build`: Build for production to `dist/`
+- `npm run preview`: Preview a production build locally
+- `npm run lint`: Run ESLint
 
-SkillDashboard.jsx
+Environment Variables
 
-LessonPage.jsx
+If APIs or third‑party services are used, configure a `.env` file at the project root. Example (keys are illustrative and optional):
 
-styles/ — Component-specific CSS files
+```
+VITE_API_BASE_URL=
+VITE_FEATURE_FLAGS=
+```
 
-Context/
+Application Routing
 
-UserContext.jsx — Global user state and lesson tracking
-
-utils/
-
-generateLessons.js — Frontend AI lesson generator
-
-.gitignore
-
-package.json
-
-vite.config.js
-
-.env — Environment variables (e.g., API keys if used)
-
-Routing Overview
-Route	Component	Description
+Path	Component	Description
 /	SignIn	Login page
 /create-account	CreateAccount	Register new user
 /quiz	Career	Career questionnaire
@@ -96,57 +131,50 @@ Route	Component	Description
 /dashboard	Dashboard	Main skill tree
 /skip-dashboard	SkipDashboard	Alternate path if resume skipped
 /lesson/:id	LessonPage	Detailed lesson view
-Quick Start
 
-Install dependencies:
+Deployment (Vercel)
 
-npm install
+This project includes `vercel.json` configured for Vite static output.
 
+Build and deploy
 
-Run the development server:
+1. Ensure a production build:
 
-npm run dev
+```
+npm run build
+```
 
+2. Deploy the `dist/` directory via Vercel. The provided config sets:
 
-Open in browser:
+```
+buildCommand: npm run build
+outputDirectory: dist
+framework: vite
+rewrites: [{ source: "/(.*)", destination: "/" }]
+```
 
-http://localhost:5173
+Security Notes
 
+- DOMPurify is included for sanitizing user‑generated content. Ensure any HTML or markdown rendering passes through sanitization.
+- Avoid storing sensitive data in localStorage; this project uses it only for lightweight, client‑side session state.
 
-Complete onboarding flow:
+Contributing
 
-Sign In / Create Account → Career Quiz → Upload Resume → Dashboard
+Contributions are welcome! Please open an issue to discuss proposed changes before submitting a pull request. When contributing:
 
-
-Explore your lessons:
-
-View your personalized skill tree
-
-Click nodes to open detailed lessons
-
-Complete challenges to unlock new skills
-
-Core Technologies
-
-Frontend: React, Vite, React Router
-
-State Management: React Context API
-
-Styling: CSS Modules or Tailwind (optional)
-
-AI Lesson Logic: Client-side via generateLessons.js
+- Follow existing code style and formatting
+- Write clear, descriptive commit messages
+- Add or update documentation when behavior changes
 
 Roadmap
 
- Add XP and level progression
+- Add XP and level progression
+- Save and restore user progress
+- Add more challenge formats (quizzes, projects, simulations)
+- Expand lesson generation across additional career paths and skill domains
 
- Save and restore user progress
+Author & License
 
- Add more challenge formats (quizzes, projects, simulations)
+Author: Siquil J. Ward — Developer and designer focused on gamified learning, career readiness, and user‑centered design.
 
- Expand lesson generation for multiple career paths and skill domains
-
-Author
-
-Siquil J. Ward
-Developer and designer focused on gamified learning, career readiness, and user-centered design.
+License: Not specified. If you intend to open‑source, consider adding a `LICENSE` file (e.g., MIT) at the repository root.
