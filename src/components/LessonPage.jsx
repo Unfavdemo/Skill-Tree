@@ -13,6 +13,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useUser } from "../Context/UserContext";
+import { useAccessibility } from "../Context/AccessibilityContext";
 import { motion } from "framer-motion";
 import { generateLessonChallenge } from "../utils/generateLessonChallenge";
 import { evaluateAnswer } from "../utils/evaluateAnswer";
@@ -26,6 +27,7 @@ export default function LessonPage() {
   const { title: urlTitle } = useParams();              // Get lesson title from URL
   const navigate = useNavigate();                      // React Router navigation hook
   const { user, setUser, loading } = useUser();       // Access to global user context
+  const { announce } = useAccessibility();             // Access to accessibility features
 
   // ========================================
   // 📊 LESSON DATA
@@ -61,6 +63,7 @@ export default function LessonPage() {
   const [isEvaluating, setIsEvaluating] = useState(false);         // Evaluation loading state
   const [evaluationResult, setEvaluationResult] = useState(null);  // Latest evaluation result
   const [attempts, setAttempts] = useState(0);                     // Number of attempts for current challenge
+  const [showNextButton, setShowNextButton] = useState(false);    // Show next challenge button after correct answer
 
   // ========================================
   // 🔄 CHALLENGE GENERATION EFFECT
@@ -183,24 +186,21 @@ export default function LessonPage() {
       // 📊 FEEDBACK PROCESSING
       // ========================================
       if (evaluation.canProceed) {
-        // Answer is acceptable - provide positive feedback and advance
+        // Answer is acceptable - provide positive feedback
         setFeedback(`🎉 ${evaluation.feedback}`);
+        announce(`Challenge ${currentIndex + 1} completed successfully`);
         
         // Update user progress
         updateUserProgress();
         
-        // Move to next challenge or complete lesson
-        setTimeout(() => {
-          if (currentIndex + 1 < challenges.length) {
-            advanceToNextChallenge();
-          } else {
-            completeLesson();
-          }
-        }, 2000);
+        // Show next button instead of auto-advancing
+        setShowNextButton(true);
       } else {
         // Answer needs improvement - provide constructive feedback
         const attemptMessage = attempts > 1 ? ` (Attempt ${attempts})` : "";
         setFeedback(`📝 ${evaluation.feedback}${attemptMessage}`);
+        announce(`Answer needs improvement. Please review the feedback and try again.`);
+        setShowNextButton(false); // Hide next button if answer needs improvement
         
         // Show suggestions for improvement
         if (evaluation.suggestions) {
@@ -252,11 +252,17 @@ export default function LessonPage() {
   // ========================================
   // Resets state for the next challenge
   const advanceToNextChallenge = () => {
-    setCurrentIndex(currentIndex + 1);
-    setAnswer("");
-    setFeedback("");
-    setEvaluationResult(null);
-    setAttempts(0);
+    if (currentIndex + 1 < challenges.length) {
+      setCurrentIndex(currentIndex + 1);
+      setAnswer("");
+      setFeedback("");
+      setEvaluationResult(null);
+      setAttempts(0);
+      setShowNextButton(false);
+      announce(`Starting challenge ${currentIndex + 2} of ${challenges.length}`);
+    } else {
+      completeLesson();
+    }
   };
 
   // ========================================
@@ -266,6 +272,7 @@ export default function LessonPage() {
   // Adds skill to user.skills when lesson is completed
   const completeLesson = () => {
     setGameState({ completed: true });
+    announce(`Lesson ${DOMPurify.sanitize(lesson?.title || "completed")} completed! Congratulations!`);
     
     // Add skill to user.skills if not already present
     if (skill && lesson) {
@@ -284,7 +291,10 @@ export default function LessonPage() {
       });
     }
     
-    setTimeout(() => navigate("/dashboard"), 2500);
+    // Navigate to skills dashboard to show skills gained
+    setTimeout(() => {
+      navigate("/skills-dashboard");
+    }, 2000);
   };
 
   if (loading) return <div className="screen p-6 text-center text-gray-300">Loading lesson...</div>;
@@ -323,35 +333,56 @@ export default function LessonPage() {
               rows={4}
               placeholder="Write your answer here..."
               value={answer}
-              onChange={(e) => setAnswer(DOMPurify.sanitize(e.target.value))}
+              onChange={(e) => {
+                setAnswer(DOMPurify.sanitize(e.target.value));
+                // Reset next button if user starts typing again
+                if (showNextButton) {
+                  setShowNextButton(false);
+                }
+              }}
             />
 
             <div className="flex gap-3 mt-4">
-              <button 
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed" 
-                onClick={handleCompleteChallenge}
-                disabled={isEvaluating || !answer.trim()}
-              >
-                {isEvaluating ? "Evaluating..." : "Submit Answer"}
-              </button>
-              <button 
-                className="px-4 py-2 rounded-lg text-white" 
-                style={{
-                  background: 'linear-gradient(90deg, #7c3aed, #00d8ff)',
-                  boxShadow: '0 0 20px rgba(124, 58, 237, 0.6)'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'linear-gradient(90deg, #00d8ff, #7c3aed)';
-                  e.target.style.boxShadow = '0 0 35px rgba(0, 216, 255, 0.8)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'linear-gradient(90deg, #7c3aed, #00d8ff)';
-                  e.target.style.boxShadow = '0 0 20px rgba(124, 58, 237, 0.6)';
-                }}
-                onClick={() => setFeedback(`💡 Hint: ${currentChallenge.hint}`)}
-              >
-                Need Hint
-              </button>
+              {!showNextButton ? (
+                <>
+                  <button 
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed" 
+                    onClick={handleCompleteChallenge}
+                    disabled={isEvaluating || !answer.trim()}
+                  >
+                    {isEvaluating ? "Evaluating..." : "Submit Answer"}
+                  </button>
+                  <button 
+                    className="px-4 py-2 rounded-lg text-white" 
+                    style={{
+                      background: 'linear-gradient(90deg, #7c3aed, #00d8ff)',
+                      boxShadow: '0 0 20px rgba(124, 58, 237, 0.6)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'linear-gradient(90deg, #00d8ff, #7c3aed)';
+                      e.target.style.boxShadow = '0 0 35px rgba(0, 216, 255, 0.8)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'linear-gradient(90deg, #7c3aed, #00d8ff)';
+                      e.target.style.boxShadow = '0 0 20px rgba(124, 58, 237, 0.6)';
+                    }}
+                    onClick={() => setFeedback(`💡 Hint: ${currentChallenge.hint}`)}
+                  >
+                    Need Hint
+                  </button>
+                </>
+              ) : (
+                <button 
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-semibold" 
+                  onClick={advanceToNextChallenge}
+                  style={{
+                    background: 'linear-gradient(90deg, #10b981, #059669)',
+                    boxShadow: '0 0 20px rgba(16, 185, 129, 0.6)'
+                  }}
+                >
+                  {currentIndex + 1 < challenges.length ? "Next Challenge →" : "Complete Lesson →"}
+                </button>
+              )}
             </div>
 
             {/* Enhanced Feedback Display */}
@@ -408,8 +439,8 @@ export default function LessonPage() {
           </>
         ) : (
           <motion.div className="text-center mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <h3 className="text-xl font-bold text-green-400">🎉 Lesson Completed!</h3>
-            <p className="text-gray-300">Returning to dashboard...</p>
+            <h3 className="text-xl font-bold text-green-400 mb-4">🎉 Lesson Completed!</h3>
+            <p className="text-gray-300 mb-4">You've gained a new skill! Redirecting to skills dashboard...</p>
           </motion.div>
         )}
       </motion.div>

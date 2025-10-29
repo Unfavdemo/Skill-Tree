@@ -73,6 +73,10 @@ const HomePage = () => {
       animate="visible"
       variants={containerVariants}
     >
+      {/* Skip to main content link for screen readers */}
+      <a href="#main-content" className="skip-to-main">
+        Skip to main content
+      </a>
       {/* Navigation Bar */}
       <motion.nav 
         className="homepage-navbar"
@@ -109,7 +113,7 @@ const HomePage = () => {
       </div>
 
       {/* Hero Section */}
-      <motion.section className="homepage-hero" variants={itemVariants}>
+      <motion.section id="main-content" className="homepage-hero" variants={itemVariants}>
         <div className="homepage-hero-content">
           <motion.div
             className="hero-badge"
@@ -542,9 +546,6 @@ const HomePage = () => {
           <div className="footer-cta-buttons">
             <Link to="/create-account" className="homepage-btn homepage-btn-primary homepage-btn-large">
               Get Started Free
-            </Link>
-            <Link to="/signin" className="homepage-btn homepage-btn-secondary homepage-btn-large">
-              Sign In
             </Link>
           </div>
         </div>

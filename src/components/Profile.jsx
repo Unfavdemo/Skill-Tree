@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useUser } from "../Context/UserContext";
 import { useTheme } from "../Context/ThemeContext";
+import { useAccessibility } from "../Context/AccessibilityContext";
 import { useNavigate } from "react-router-dom";
 import { generateLessons } from "../utils/generateLessons";
 import DOMPurify from "dompurify";
@@ -9,6 +10,7 @@ import "../styles/Profile.css";
 export default function Profile() {
   const { user, setUser } = useUser();
   const { isDarkMode, toggleTheme } = useTheme();
+  const { announce } = useAccessibility();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState(user?.username || "");
@@ -40,6 +42,7 @@ export default function Profile() {
     }
 
     setResumeFile(file);
+    announce(`Resume file ${sanitize(file.name)} uploaded successfully`);
   };
 
   const handleSave = async () => {
@@ -73,6 +76,8 @@ export default function Profile() {
         challenges: 3,
       });
 
+      announce("Profile saved successfully");
+
       // Don't override existing completed skills
       // Only regenerate available lessons, not skills gained
       // Skills are only added when lessons are completed
@@ -103,21 +108,38 @@ export default function Profile() {
       <header className="profile-header" role="banner">
         <div className="flex justify-between items-center w-full">
           <h1>Profile</h1>
-          <button
-            onClick={toggleTheme}
-            className="theme-toggle auth-btn bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-lg"
-            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-            type="button"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleTheme();
-              }
-            }}
-            title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/accessibility")}
+              className="theme-toggle auth-btn bg-purple-700 hover:bg-purple-600 text-white px-3 py-2 rounded text-lg"
+              aria-label="Accessibility settings"
+              type="button"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate("/accessibility");
+                }
+              }}
+              title="Accessibility settings"
+            >
+              ♿ Accessibility
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle auth-btn bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-lg"
+              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              type="button"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleTheme();
+                }
+              }}
+              title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+            </button>
+          </div>
         </div>
       </header>
 

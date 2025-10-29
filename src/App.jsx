@@ -14,6 +14,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "r
 import { AnimatePresence, motion } from "framer-motion";
 import { UserProvider, useUser } from "./Context/UserContext";
 import { ThemeProvider } from "./Context/ThemeContext";
+import { AccessibilityProvider } from "./Context/AccessibilityContext";
 
 // ========================================
 // 📦 COMPONENT IMPORTS
@@ -29,6 +30,7 @@ import SkipDashboard from "./components/SkipDashboard"; // Alternative dashboard
 import LessonPage from "./components/LessonPage";  // Individual lesson interface
 import SkillDashboard from "./components/SkillDashboard"; // Core skill management
 import Profile from "./components/Profile";        // User profile management
+import AccessibilitySettings from "./components/AccessibilitySettings"; // Accessibility settings
 
 // ========================================
 // 🔄 LOADING SPINNER COMPONENT
@@ -162,6 +164,14 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/accessibility"
+          element={
+            <ProtectedRoute>
+              <MotionWrapper><AccessibilitySettings /></MotionWrapper>
+            </ProtectedRoute>
+          }
+        />
 
         {/* ========================================
             🔄 FALLBACK ROUTE
@@ -183,9 +193,11 @@ function AnimatedRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
-      <UserProvider>
-        <AnimatedRoutes />
-      </UserProvider>
+      <AccessibilityProvider>
+        <UserProvider>
+          <AnimatedRoutes />
+        </UserProvider>
+      </AccessibilityProvider>
     </ThemeProvider>
   );
 }
