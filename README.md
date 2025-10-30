@@ -22,6 +22,8 @@ Overview
 
 SkillTree guides learners through a smart onboarding flow (sign in, career quiz, optional resume upload) to generate a personalized skill tree. Each node represents an interactive lesson with scenarios, challenges, and progress tracking. Completing nodes unlocks new branches, enabling a gamified progression experience.
 
+The platform emphasizes accessibility and user experience, featuring comprehensive accessibility settings, dark mode support, and a clean, modern interface built with React and Tailwind CSS. The homepage includes a fixed navigation bar with direct links to the JobBuster platform.
+
 Features
 
 - Smart Onboarding
@@ -35,25 +37,53 @@ Features
 - AI‑Generated Lessons
   - Generated client‑side from quiz answers and (optional) resume data
   - Logic implemented in `src/utils/generateLessons.js`
+- Accessibility Features
+  - Comprehensive accessibility settings panel
+  - Screen reader support with announcements
+  - High contrast mode
+  - Large touch targets
+  - Keyboard navigation support
+  - Simplified navigation option
+  - Reduced motion for users with vestibular disorders
+  - Voice commands (future enhancement)
+- Theme Support
+  - Light/Dark mode toggle
+  - Persists user preference
+  - Smooth transitions
+- Navigation & Integration
+  - Fixed navigation bar for easy access
+  - Direct integration link to JobBuster platform
+  - Glassmorphism design with backdrop blur effects
 
 Architecture & Tech Stack
 
-- Frontend: React (Vite)
-- Router: React Router
-- State: React Context API
-- Styling: CSS Modules or Tailwind CSS
-- Utilities: DOMPurify, Framer Motion, Radix UI (Progress)
+- Frontend: React 19 (Vite)
+- Router: React Router v6
+- State: React Context API (UserContext, ThemeContext, AccessibilityContext)
+- Styling: Tailwind CSS v4
+- Utilities:
+  - DOMPurify (content sanitization)
+  - Framer Motion (animations)
+  - Radix UI (Progress component)
+  - Lucide React (icons)
+  - PostCSS & Autoprefixer
 
 Project Structure
 
 ```
 SkillTree/
   public/
+    skilltree-icon-lg.svg
     vite.svg
   src/
     App.jsx                // Routing logic
     main.jsx               // App entry point
     index.css              // Base styles
+    App.css
+    assets/
+      react.svg
+    backend/
+      server.js            // Backend server (if needed)
     components/
       SignIn.jsx
       CreateAccount.jsx
@@ -63,15 +93,24 @@ SkillTree/
       SkipDashboard.jsx
       SkillDashboard.jsx
       LessonPage.jsx
-      styles/              // Component-specific CSS files
+      HomePage.jsx
+      Profile.jsx
+      AccessibilitySettings.jsx
+      styles/
+        Profile.css        // Component-specific CSS files
     Context/
       UserContext.jsx      // Global user state and lesson tracking
+      ThemeContext.jsx     // Theme management (light/dark mode)
+      AccessibilityContext.jsx  // Accessibility settings and features
     utils/
-      generateLessons.js   // Frontend AI lesson generator
+      generateLessons.js           // Frontend AI lesson generator
+      generateLessonChallenge.js   // Challenge generation logic
+      evaluateAnswer.js            // Answer evaluation logic
   .env                     // Environment variables (if used)
   package.json
   vite.config.js
   vercel.json
+  eslint.config.js
 ```
 
 Getting Started
@@ -123,14 +162,17 @@ VITE_FEATURE_FLAGS=
 
 Application Routing
 
-Path	Component	Description
-/	SignIn	Login page
-/create-account	CreateAccount	Register new user
-/quiz	Career	Career questionnaire
-/upload	Upload	Resume upload (optional)
-/dashboard	Dashboard	Main skill tree
-/skip-dashboard	SkipDashboard	Alternate path if resume skipped
-/lesson/:id	LessonPage	Detailed lesson view
+| Path | Component | Description |
+|------|-----------|-------------|
+| / | SignIn | Login page |
+| /create-account | CreateAccount | Register new user |
+| /home | HomePage | Home/dashboard landing page |
+| /quiz | Career | Career questionnaire |
+| /upload | Upload | Resume upload (optional) |
+| /dashboard | Dashboard | Main skill tree |
+| /skip-dashboard | SkipDashboard | Alternate path if resume skipped |
+| /profile | Profile | User profile page |
+| /lesson/:id | LessonPage | Detailed lesson view |
 
 Deployment (Vercel)
 
@@ -157,6 +199,7 @@ Security Notes
 
 - DOMPurify is included for sanitizing user‑generated content. Ensure any HTML or markdown rendering passes through sanitization.
 - Avoid storing sensitive data in localStorage; this project uses it only for lightweight, client‑side session state.
+- User authentication is handled client-side for this demo project. For production use, implement proper backend authentication.
 
 Contributing
 
@@ -168,13 +211,32 @@ Contributions are welcome! Please open an issue to discuss proposed changes befo
 
 Roadmap
 
-- Add XP and level progression
-- Save and restore user progress
-- Add more challenge formats (quizzes, projects, simulations)
-- Expand lesson generation across additional career paths and skill domains
+- ✅ Accessibility settings panel
+- ✅ Dark mode support
+- ✅ Profile page
+- ✅ Fixed navigation bar with external links
+- ✅ JobBuster platform integration
+- ⏳ Add XP and level progression
+- ⏳ Save and restore user progress across sessions
+- ⏳ Add more challenge formats (quizzes, projects, simulations)
+- ⏳ Expand lesson generation across additional career paths and skill domains
+- ⏳ Voice command support
+- ⏳ Backend API integration for persistent data storage
+- ⏳ User achievements and badges
+- ⏳ Social features (sharing progress, leaderboards)
 
-Author & License
+## Author & License
 
-Author: Siquil J. Ward — Developer and designer focused on gamified learning, career readiness, and user‑centered design.
+**Author**: Siquil J. Ward — Developer and designer focused on gamified learning, career readiness, and user‑centered design.
 
-License: Not specified. If you intend to open‑source, consider adding a `LICENSE` file (e.g., MIT) at the repository root.
+**License**: Not specified. If you intend to open‑source, consider adding a `LICENSE` file (e.g., MIT) at the repository root.
+
+---
+
+## Acknowledgments
+
+This project emphasizes accessibility and inclusive design, ensuring that learning opportunities are available to all users regardless of their abilities or preferences.
+
+## Integrations
+
+- **JobBuster**: Direct link to the JobBuster platform for job search and career opportunities. Accessible via the "JobBuster" button in the navigation bar.

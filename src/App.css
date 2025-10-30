@@ -2070,6 +2070,30 @@ button + .profile-btn {
   color: #00d8ff;
 }
 
+.homepage-btn-pink {
+  background: rgba(255, 105, 180, 0.8);
+  color: #ffffff;
+  border: 2px solid rgba(255, 105, 180, 0.6);
+  box-shadow: 0 0 20px rgba(255, 105, 180, 0.4);
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  text-decoration: none !important;
+  position: relative !important;
+  z-index: 1001 !important;
+}
+
+.homepage-btn-pink:hover {
+  transform: translateY(-3px) scale(1.05);
+  background: rgba(255, 105, 180, 0.95);
+  border-color: #FF1493;
+  box-shadow: 0 0 35px rgba(255, 105, 180, 0.7);
+  color: #ffffff;
+}
+
+.homepage-btn-pink:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
 .homepage-btn-large {
   padding: 1.25rem 3rem;
   font-size: 1.25rem;

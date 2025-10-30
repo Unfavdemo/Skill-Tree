@@ -88,11 +88,24 @@ const HomePage = () => {
           <Link to="/" className="navbar-logo">
             🌳 SkillTree
           </Link>
-          <div className="navbar-actions">
-            <Link to="/signin" className="homepage-btn homepage-btn-secondary homepage-btn-nav">
+          <div className="navbar-actions" style={{ position: 'relative', zIndex: 1000 }}>
+            <a 
+              href="https://job-buster-final-git-main-yaras-projects-cfce906a.vercel.app/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="homepage-btn homepage-btn-pink homepage-btn-nav"
+              style={{ cursor: 'pointer', textDecoration: 'none', position: 'relative', zIndex: 1001 }}
+              onClick={(e) => {
+                e.preventDefault();
+                window.open('https://job-buster-final-git-main-yaras-projects-cfce906a.vercel.app/', '_blank', 'noopener,noreferrer');
+              }}
+            >
+              JobBuster
+            </a>
+            <Link to="/signin" className="homepage-btn homepage-btn-secondary homepage-btn-nav" style={{ position: 'relative', zIndex: 1001 }}>
               Sign In
             </Link>
-            <Link to="/create-account" className="homepage-btn homepage-btn-primary homepage-btn-nav">
+            <Link to="/create-account" className="homepage-btn homepage-btn-primary homepage-btn-nav" style={{ position: 'relative', zIndex: 1001 }}>
               Get Started Free →
             </Link>
           </div>
@@ -543,10 +556,23 @@ const HomePage = () => {
           <p className="footer-cta-description">
             Join thousands of learners building their careers with SkillTree
           </p>
-          <div className="footer-cta-buttons">
-            <Link to="/create-account" className="homepage-btn homepage-btn-primary homepage-btn-large">
+          <div className="footer-cta-buttons" style={{ position: 'relative', zIndex: 1000 }}>
+            <Link to="/create-account" className="homepage-btn homepage-btn-primary homepage-btn-large" style={{ position: 'relative', zIndex: 1001 }}>
               Get Started Free
             </Link>
+            <a 
+              href="https://job-buster-final-git-main-yaras-projects-cfce906a.vercel.app/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="homepage-btn homepage-btn-pink homepage-btn-large"
+              style={{ cursor: 'pointer', textDecoration: 'none', position: 'relative', zIndex: 1001 }}
+              onClick={(e) => {
+                e.preventDefault();
+                window.open('https://job-buster-final-git-main-yaras-projects-cfce906a.vercel.app/', '_blank', 'noopener,noreferrer');
+              }}
+            >
+              Explore JobBuster
+            </a>
           </div>
         </div>
       </motion.section>
