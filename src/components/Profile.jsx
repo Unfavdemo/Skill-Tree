@@ -98,6 +98,14 @@ export default function Profile() {
     navigate("/");
   };
 
+  // Survey URL - Update this with your actual survey link
+  const SURVEY_URL = "https://forms.gle/rhGhw52FcSNx3t9o9"; // Replace with your survey URL
+
+  const handleSurveyClick = () => {
+    window.open(SURVEY_URL, "_blank", "noopener,noreferrer");
+    announce("Opening survey in new tab");
+  };
+
   // XP and Level calculation
   const xp = user.skills?.length * 100 || 0;
   const level = Math.floor((user.skills?.length || 0) / 3) + 1;
@@ -391,8 +399,22 @@ export default function Profile() {
         )}
       </section>
 
-      {/* Sign Out Button */}
-      <div className="profile-actions">
+      {/* Bottom Actions - Survey and Sign Out */}
+      <div className="profile-actions profile-actions-bottom">
+        <button
+          className="profile-btn profile-btn-survey"
+          onClick={handleSurveyClick}
+          type="button"
+          aria-label="Take our survey"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleSurveyClick();
+            }
+          }}
+        >
+          📝 Take Survey
+        </button>
         <button
           onClick={handleSignOut}
           className="profile-btn profile-btn-danger"

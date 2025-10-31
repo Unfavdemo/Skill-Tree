@@ -1216,6 +1216,10 @@ textarea:focus-visible {
   flex-wrap: wrap;                                /* Wrap on smaller screens */
 }
 
+.profile-actions-bottom {
+  justify-content: space-between;                 /* Space buttons on opposite sides */
+}
+
 /* ==========================
    🔘 BUTTON GROUPS (Even Spacing - Global)
 ========================== */
@@ -1414,6 +1418,17 @@ button + .profile-btn {
   transform: translateY(-2px) scale(1.03);        /* Lift and scale on hover */
   background: linear-gradient(90deg, #ef4444, #dc2626); /* Reverse gradient */
   box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);    /* Brighter glow on hover */
+}
+
+.profile-btn-survey {
+  background: linear-gradient(90deg, #10b981, #06b6d4); /* Green to cyan gradient */
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);   /* Green glow */
+}
+
+.profile-btn-survey:hover {
+  transform: translateY(-2px) scale(1.03);        /* Lift and scale on hover */
+  background: linear-gradient(90deg, #06b6d4, #10b981); /* Reverse gradient */
+  box-shadow: 0 0 35px rgba(6, 182, 212, 0.8);   /* Cyan glow on hover */
 }
 
 /* Profile Stats Grid */
