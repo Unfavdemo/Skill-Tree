@@ -25,34 +25,7 @@ Anyone else feel like group projects taught you more about working in tech than 
 ---
 
 
-🎮 **From Skill Trees to Career Growth: Building Personalized Learning Platforms**
 
-Excited to share SkillTree — a gamified career learning platform I developed that bridges the gap between career aspirations and practical skill development.
-
-**The Challenge:**
-Traditional learning platforms are either too generic or too specialized. Most assume you're in tech. What about healthcare professionals, educators, consultants, or creatives? Everyone deserves personalized, engaging skill development.
-
-**The Solution:**
-SkillTree uses AI to generate customized learning paths across 10+ industries. Here's what makes it different:
-
-✨ **AI-Powered Personalization** — GPT-4o-mini analyzes your resume, career goals, and skill assessments to create lessons tailored to YOUR industry and role
-
-🎯 **Real-World Scenarios** — Interactive challenges mirror actual workplace situations, not abstract concepts
-
-🌳 **Gamified Progression** — Visual skill trees with unlocking mechanisms make learning engaging and rewarding
-
-♿ **Accessibility-First** — WCAG-compliant design ensures everyone can access career development opportunities, with screen reader support, keyboard navigation, and customizable settings
-
-**Why It Matters:**
-Whether you're a nurse learning communication strategies, a marketer developing negotiation skills, or a teacher building presentation expertise — SkillTree adapts to YOUR career path, not the other way around.
-
-The platform generates contextually relevant scenarios that prepare users for real workplace challenges, making skill development practical and immediately applicable.
-
-**Tech Stack:** React 19, Vite, OpenAI GPT-4o-mini, Tailwind CSS, Framer Motion
-
-What's been your experience with personalized learning platforms? What would make skill development more engaging for your industry? 👇
-
-#CareerDevelopment #EdTech #AI #WebDevelopment #React #PersonalizedLearning #Accessibility #UXDesign #Gamification #ProfessionalDevelopment
 
 ---
 

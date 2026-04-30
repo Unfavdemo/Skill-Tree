@@ -64,6 +64,7 @@ export default function LessonPage() {
   const [evaluationResult, setEvaluationResult] = useState(null);  // Latest evaluation result
   const [attempts, setAttempts] = useState(0);                     // Number of attempts for current challenge
   const [showNextButton, setShowNextButton] = useState(false);    // Show next challenge button after correct answer
+  const [isLoadingChallenges, setIsLoadingChallenges] = useState(false); // Loading state for challenge generation
 
   // ========================================
   // 🔄 CHALLENGE GENERATION EFFECT
@@ -76,6 +77,7 @@ export default function LessonPage() {
     if (!lesson || !user) return;
 
     const fetchChallenges = async () => {
+      setIsLoadingChallenges(true);
       try {
         const generatedChallenges = [];
         const challengeCount = 3; // Generate 3 challenges per lesson
@@ -97,6 +99,7 @@ export default function LessonPage() {
         }
 
         setChallenges(generatedChallenges);
+        setIsLoadingChallenges(false);
 
         // ========================================
         // 💾 SAVE LESSON DATA
@@ -127,6 +130,7 @@ export default function LessonPage() {
           challenge: "Try again later.", 
           hint: "Please refresh the page and try again." 
         }]);
+        setIsLoadingChallenges(false);
       }
     };
 
@@ -318,7 +322,12 @@ export default function LessonPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        {!gameState.completed ? (
+        {isLoadingChallenges ? (
+          <div className="ai-loader" role="status" aria-live="polite" aria-busy="true">
+            <div className="ai-loader-spinner" aria-hidden="true"></div>
+            <p className="ai-loader-text">✨ Generating your personalized challenges...</p>
+          </div>
+        ) : !gameState.completed ? (
           <>
             {/* Scenario */}
             <p className="text-gray-300 mb-4 italic">{currentChallenge.scenario || "Generating scenario..."}</p>
