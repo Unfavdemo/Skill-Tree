@@ -11,6 +11,10 @@ export default function nextConfig(phase) {
     poweredByHeader: false,
     compress: true,
 
+    // Next.js 16 enables Turbopack by default in many environments (e.g. Vercel).
+    // If a `webpack` function is present, Next requires a `turbopack` config too.
+    turbopack: {},
+
     // Helps on Windows when `.next` intermittently misses cache artifacts (prevents `__webpack_modules__` corruption)
     webpack(config) {
       if (isDev) {
