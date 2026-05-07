@@ -17,9 +17,9 @@ import SkillDashboard from "./SkillDashboard";
 // Renders SkillDashboard with special configuration for users who skipped resume upload
 const SkipDashboard = () => {
   return (
-    <SkillDashboard 
-      showResumeSkipped={true}    // Indicates user skipped resume upload
-      showUploadButton={true}     // Shows option to upload resume later
+    <SkillDashboard
+      showResumeSkipped={true} // Indicates user skipped resume upload
+      showUploadButton={true} // Shows option to upload resume later
     />
   );
 };

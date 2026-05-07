@@ -9,12 +9,25 @@
 // - Handles API errors with meaningful fallback content
 // - Sanitizes AI responses to prevent XSS attacks
 
+import { parseJsonObjectFromContent } from "../lib/parseAiJson";
+
 export async function generateLessonChallenge({ lessonTitle, skill, industry }) {
   // ========================================
   // 🔑 API CONFIGURATION
   // ========================================
   // Get OpenAI API key from environment variables
-  const VITE_OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+  const VITE_OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+
+  // If no key is configured, skip the network call and use fallback content.
+  if (!VITE_OPENAI_API_KEY) {
+    const industryContext =
+      industry && industry !== "general" ? industry : "your professional field";
+    return {
+      scenario: `Imagine you are in a realistic professional setting in ${industryContext} where you need to apply ${lessonTitle}. Consider the workplace environment, colleagues or clients involved, and the potential impact of your actions.`,
+      challenge: `Describe a specific real-world situation in ${industryContext} where you would apply ${lessonTitle}. Explain your approach to addressing this situation effectively.`,
+      hint: `Think about professional best practices, key considerations specific to your field, the stakeholders involved, and practical steps that lead to successful outcomes.`,
+    };
+  }
 
   // ========================================
   // 🌐 AI API REQUEST
@@ -27,7 +40,7 @@ export async function generateLessonChallenge({ lessonTitle, skill, industry }) 
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${VITE_OPENAI_API_KEY}`,
+        Authorization: `Bearer ${VITE_OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -83,19 +96,23 @@ Respond in JSON only:
     // - Validates and sanitizes challenge data
     // - Provides fallback values for missing fields
     const data = await aiResponse.json();
+
+    if (!aiResponse.ok) {
+      const msg = data?.error?.message || data?.error || aiResponse.statusText;
+      console.error("SecureAI: OpenAI API error:", msg);
+      throw new Error(typeof msg === "string" ? msg : "OpenAI request failed");
+    }
+
     const rawContent = data.choices?.[0]?.message?.content || "";
+    const parsed = parseJsonObjectFromContent(rawContent);
 
-    // ========================================
-    // 🔍 JSON EXTRACTION
-    // ========================================
-    // Safely extracts JSON object from AI response
-    // - Finds first '{' and last '}' to isolate JSON content
-    // - Prevents parsing errors from mixed text/JSON responses
-    const jsonStart = rawContent.indexOf("{");
-    const jsonEnd = rawContent.lastIndexOf("}") + 1;
-    const jsonString = rawContent.substring(jsonStart, jsonEnd);
-
-    const parsed = JSON.parse(jsonString);
+    if (!parsed) {
+      console.warn(
+        "SecureAI: Empty or unparseable challenge JSON. Preview:",
+        String(rawContent).slice(0, 200)
+      );
+      throw new Error("Invalid challenge JSON from model");
+    }
 
     // ========================================
     // ✅ DATA VALIDATION & SANITIZATION
@@ -109,7 +126,6 @@ Respond in JSON only:
       challenge: parsed.challenge || `Apply ${lessonTitle} to solve a problem in this scenario.`,
       hint: parsed.hint || `Think about best practices and steps to solve the challenge.`,
     };
-
   } catch (err) {
     // ========================================
     // 🚨 ERROR HANDLING & FALLBACK SYSTEM
@@ -128,7 +144,8 @@ Respond in JSON only:
     // - Provides universal professional challenge structure
     // - Maintains consistent challenge format
     // - Applicable to any field, not just tech
-    const industryContext = industry && industry !== "general" ? industry : "your professional field";
+    const industryContext =
+      industry && industry !== "general" ? industry : "your professional field";
     return {
       scenario: `Imagine you are in a realistic professional setting in ${industryContext} where you need to apply ${lessonTitle}. Consider the workplace environment, colleagues or clients involved, and the potential impact of your actions.`,
       challenge: `Describe a specific real-world situation in ${industryContext} where you would apply ${lessonTitle}. Explain your approach to addressing this situation effectively.`,

@@ -18,6 +18,19 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 // ========================================
 const AccessibilityContext = createContext();
 
+/** Stable defaults (module scope) so SSR and first client render stay identical */
+const DEFAULT_ACCESSIBILITY_SETTINGS = {
+  screenReaderAnnouncements: true,
+  highContrastMode: false,
+  reducedMotion: false,
+  largeTouchTargets: false,
+  voiceCommandsEnabled: false,
+  keyboardNavigation: true,
+  simplifiedNavigation: false,
+  clearLayouts: true,
+  reduceAnimations: false,
+};
+
 // ========================================
 // 🎯 ACCESSIBILITY PROVIDER COMPONENT
 // ========================================
@@ -26,80 +39,65 @@ export const AccessibilityProvider = ({ children }) => {
   const [announcement, setAnnouncement] = useState("");
   const [announcementPriority, setAnnouncementPriority] = useState("polite");
 
-  // Default accessibility settings
-  const defaultSettings = {
-    // Visual needs
-    screenReaderAnnouncements: true,
-    highContrastMode: false,
-    reducedMotion: false,
-    
-    
-    // Motor control
-    largeTouchTargets: false,
-    voiceCommandsEnabled: false,
-    keyboardNavigation: true,
-    
-    // Cognitive support
-    simplifiedNavigation: false,
-    clearLayouts: true,
-    reduceAnimations: false,
-  };
+  // Match SSR on first paint; merge localStorage after mount (fixes React hydration #418)
+  const [settings, setSettings] = useState(DEFAULT_ACCESSIBILITY_SETTINGS);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
-  // Load settings from localStorage or use defaults
-  const [settings, setSettings] = useState(() => {
+  useEffect(() => {
     try {
       const saved = localStorage.getItem("accessibilitySettings");
       if (saved) {
         const parsed = JSON.parse(saved);
-        return { ...defaultSettings, ...parsed };
+        setSettings({ ...DEFAULT_ACCESSIBILITY_SETTINGS, ...parsed });
       }
     } catch (err) {
       console.error("Failed to load accessibility settings:", err);
     }
-    return defaultSettings;
-  });
+    setHasHydrated(true);
+  }, []);
 
-  // Save settings to localStorage whenever they change
+  // Save settings after initial load so we don't overwrite storage with defaults before read completes
   useEffect(() => {
+    if (!hasHydrated) return;
     try {
       localStorage.setItem("accessibilitySettings", JSON.stringify(settings));
     } catch (err) {
       console.error("Failed to save accessibility settings:", err);
     }
-  }, [settings]);
+  }, [settings, hasHydrated]);
 
   // Apply accessibility settings to document
   useEffect(() => {
     const root = document.documentElement;
-    
+
     // High contrast mode
     if (settings.highContrastMode) {
       root.classList.add("high-contrast-mode");
     } else {
       root.classList.remove("high-contrast-mode");
     }
-    
+
     // Large touch targets
     if (settings.largeTouchTargets) {
       root.classList.add("large-touch-targets");
     } else {
       root.classList.remove("large-touch-targets");
     }
-    
+
     // Simplified navigation
     if (settings.simplifiedNavigation) {
       root.classList.add("simplified-navigation");
     } else {
       root.classList.remove("simplified-navigation");
     }
-    
+
     // Reduced motion
     if (settings.reducedMotion || settings.reduceAnimations) {
       root.classList.add("reduced-motion");
     } else {
       root.classList.remove("reduced-motion");
     }
-    
+
     // Clear layouts
     if (settings.clearLayouts) {
       root.classList.add("clear-layouts");
@@ -109,30 +107,33 @@ export const AccessibilityProvider = ({ children }) => {
   }, [settings]);
 
   // Screen reader announcement function
-  const announce = useCallback((message, priority = "polite") => {
-    if (!settings.screenReaderAnnouncements || !message) {
-      return;
-    }
-    
-    // Set priority first
-    setAnnouncementPriority(priority);
-    
-    // Clear first to trigger a change, then set new message
-    // This two-step process (clear then set) is more reliable for screen readers
-    setAnnouncement("");
-    
-    // Use requestAnimationFrame to ensure the clear happens, then set the message
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setAnnouncement(message);
-      });
-    });
+  const announce = useCallback(
+    (message, priority = "polite") => {
+      if (!settings.screenReaderAnnouncements || !message) {
+        return;
+      }
 
-    // Clear the announcement after it's been read (3 seconds should be enough)
-    setTimeout(() => {
+      // Set priority first
+      setAnnouncementPriority(priority);
+
+      // Clear first to trigger a change, then set new message
+      // This two-step process (clear then set) is more reliable for screen readers
       setAnnouncement("");
-    }, 3000);
-  }, [settings.screenReaderAnnouncements]);
+
+      // Use requestAnimationFrame to ensure the clear happens, then set the message
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnnouncement(message);
+        });
+      });
+
+      // Clear the announcement after it's been read (3 seconds should be enough)
+      setTimeout(() => {
+        setAnnouncement("");
+      }, 3000);
+    },
+    [settings.screenReaderAnnouncements]
+  );
 
   // Update a specific setting
   const updateSetting = (key, value) => {
@@ -144,7 +145,7 @@ export const AccessibilityProvider = ({ children }) => {
 
   // Reset all settings to defaults
   const resetSettings = () => {
-    setSettings(defaultSettings);
+    setSettings({ ...DEFAULT_ACCESSIBILITY_SETTINGS });
   };
 
   // Toggle a setting
@@ -190,4 +191,3 @@ export const useAccessibility = () => {
   }
   return context;
 };
-

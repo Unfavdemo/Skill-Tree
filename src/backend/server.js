@@ -10,6 +10,7 @@
 // - Returns structured lesson data for frontend consumption
 
 import { useState, useEffect } from "react";
+import { parseJsonArrayFromContent } from "../lib/parseAiJson";
 
 // ========================================
 // 🎯 CAREER LESSONS COMPONENT
@@ -22,15 +23,15 @@ export default function CareerLessons({ resumeUploaded, skills = [], careerAnswe
   // ========================================
   // 📊 STATE MANAGEMENT
   // ========================================
-  const [lessons, setLessons] = useState([]);           // Generated lessons array
-  const [loading, setLoading] = useState(false);       // Loading state for API calls
-  const [error, setError] = useState(null);             // Error state for failed requests
+  const [lessons, setLessons] = useState([]); // Generated lessons array
+  const [loading, setLoading] = useState(false); // Loading state for API calls
+  const [error, setError] = useState(null); // Error state for failed requests
 
   // ========================================
   // 🔑 API CONFIGURATION
   // ========================================
   // Get OpenAI API key from environment variables
-  const VITE_OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+  const openAiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
 
   // ========================================
   // 🔄 LESSON GENERATION EFFECT
@@ -52,7 +53,7 @@ export default function CareerLessons({ resumeUploaded, skills = [], careerAnswe
         const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${VITE_OPENAI_API_KEY}`,
+            Authorization: `Bearer ${openAiKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -76,7 +77,7 @@ CRITICAL INSTRUCTIONS:
 6. Make scenarios realistic for their indicated industry/profession
 
 Task:
-Generate 3 personalized learning lessons that help the user grow in their chosen career path - whatever field that may be.
+Generate 8 personalized learning lessons that help the user grow in their chosen career path - whatever field that may be. Return exactly 8 items in the JSON array with distinct titles.
 At least one lesson should be directly tied to the user's listed skills when available.
 Use career-related responses as context to ensure recommendations fit the user's interests and goals.
 Each lesson must include:
@@ -106,16 +107,19 @@ Format the response strictly as a JSON array, where each item has: title, descri
         // ========================================
         // Processes AI response and extracts structured lesson data
         const data = await aiResponse.json();
-        const rawContent = data.choices?.[0]?.message?.content || "";
 
-        // ========================================
-        // 🔍 JSON EXTRACTION
-        // ========================================
-        // Safely extracts JSON array from AI response
-        const jsonStart = rawContent.indexOf("[");
-        const jsonEnd = rawContent.lastIndexOf("]") + 1;
-        const jsonString = rawContent.substring(jsonStart, jsonEnd);
-        const parsedLessons = JSON.parse(jsonString);
+        if (!aiResponse.ok) {
+          const msg = data?.error?.message || data?.error || aiResponse.statusText;
+          console.error("OpenAI API error:", msg);
+          throw new Error(typeof msg === "string" ? msg : "OpenAI request failed");
+        }
+
+        const rawContent = data.choices?.[0]?.message?.content || "";
+        const parsedLessons = parseJsonArrayFromContent(rawContent);
+
+        if (!parsedLessons || parsedLessons.length === 0) {
+          throw new Error("Invalid or empty lesson JSON from model");
+        }
 
         setLessons(parsedLessons);
       } catch (err) {
@@ -133,30 +137,37 @@ Format the response strictly as a JSON array, where each item has: title, descri
         // - Focuses on transferable skills applicable to any field
         const industryInterests = careerAnswers?.industryInterests || [];
         const firstIndustry = industryInterests?.[0] || "your profession";
-        
-        const fallback = skills.length > 0
-          ? skills.slice(0, 3).map(skill => ({
-              title: `Strengthen Your ${skill} Skills`,
-              description: `Deepen your knowledge and practical application of ${skill} in professional settings.`,
-              relevance: `${skill} is a valuable skill that can be applied across many industries and roles.`,
-            }))
-          : [
-              {
-                title: "Effective Problem-Solving Strategies",
-                description: "Practice structured approaches to analyze and solve complex challenges in any professional setting.",
-                relevance: "Problem-solving is universally valuable across all industries and career paths.",
-              },
-              {
-                title: "Professional Communication and Stakeholder Management",
-                description: "Develop skills in clear communication, active listening, and managing relationships with colleagues, clients, and stakeholders.",
-                relevance: "Strong communication skills are essential for success in any field and help build trust and collaboration.",
-              },
-              {
-                title: "Time Management and Prioritization",
-                description: "Learn to effectively manage your time, prioritize tasks, and balance competing demands in professional settings.",
-                relevance: "Efficient time management improves productivity and work-life balance in any career.",
-              },
-            ];
+
+        const fallback =
+          skills.length > 0
+            ? skills.slice(0, 3).map((skill) => ({
+                title: `Strengthen Your ${skill} Skills`,
+                description: `Deepen your knowledge and practical application of ${skill} in professional settings.`,
+                relevance: `${skill} is a valuable skill that can be applied across many industries and roles.`,
+              }))
+            : [
+                {
+                  title: "Effective Problem-Solving Strategies",
+                  description:
+                    "Practice structured approaches to analyze and solve complex challenges in any professional setting.",
+                  relevance:
+                    "Problem-solving is universally valuable across all industries and career paths.",
+                },
+                {
+                  title: "Professional Communication and Stakeholder Management",
+                  description:
+                    "Develop skills in clear communication, active listening, and managing relationships with colleagues, clients, and stakeholders.",
+                  relevance:
+                    "Strong communication skills are essential for success in any field and help build trust and collaboration.",
+                },
+                {
+                  title: "Time Management and Prioritization",
+                  description:
+                    "Learn to effectively manage your time, prioritize tasks, and balance competing demands in professional settings.",
+                  relevance:
+                    "Efficient time management improves productivity and work-life balance in any career.",
+                },
+              ];
 
         setLessons(fallback);
         setError("Using fallback lessons due to an API issue.");
@@ -166,7 +177,7 @@ Format the response strictly as a JSON array, where each item has: title, descri
     };
 
     fetchLessons();
-  }, [resumeUploaded, skills, careerAnswers]);
+  }, [resumeUploaded, skills, careerAnswers, openAiKey]);
 
   // ========================================
   // 🎨 COMPONENT RENDER
@@ -175,10 +186,10 @@ Format the response strictly as a JSON array, where each item has: title, descri
   return (
     <div className="p-4">
       <h2 className="text-xl font-semibold mb-3">Personalized Learning Lessons</h2>
-      
+
       {/* Loading state */}
       {loading && <p>Loading lessons...</p>}
-      
+
       {/* Error state */}
       {error && <p className="text-red-500">{error}</p>}
 
@@ -188,7 +199,9 @@ Format the response strictly as a JSON array, where each item has: title, descri
           <li key={idx} className="p-4 border rounded-xl shadow-sm">
             <h3 className="font-bold text-lg">{lesson.title}</h3>
             <p className="text-gray-700">{lesson.description}</p>
-            <p className="text-sm text-gray-500 mt-1"><em>{lesson.relevance}</em></p>
+            <p className="text-sm text-gray-500 mt-1">
+              <em>{lesson.relevance}</em>
+            </p>
           </li>
         ))}
       </ul>

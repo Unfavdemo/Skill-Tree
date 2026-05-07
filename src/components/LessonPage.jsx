@@ -10,41 +10,45 @@
 // - Secure content sanitization and error handling
 // - Gamified learning with progress tracking
 
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useUser } from "../Context/UserContext";
 import { useAccessibility } from "../Context/AccessibilityContext";
 import { motion } from "framer-motion";
 import { generateLessonChallenge } from "../utils/generateLessonChallenge";
 import { evaluateAnswer } from "../utils/evaluateAnswer";
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
+import { consumeLessonNavigationState } from "@/lib/lessonNavigation";
 
 export default function LessonPage() {
   // ========================================
   // 🎯 HOOKS AND STATE MANAGEMENT
   // ========================================
-  const { state } = useLocation();                      // Get lesson data from navigation
-  const { title: urlTitle } = useParams();              // Get lesson title from URL
-  const navigate = useNavigate();                      // React Router navigation hook
-  const { user, setUser, loading } = useUser();       // Access to global user context
-  const { announce } = useAccessibility();             // Access to accessibility features
+  const params = useParams();
+  const urlTitle = params?.title;
+  const router = useRouter();
+  const bridgeState = useMemo(() => consumeLessonNavigationState(), []);
+  const { user, setUser, loading } = useUser(); // Access to global user context
+  const { announce } = useAccessibility(); // Access to accessibility features
 
   // ========================================
   // 📊 LESSON DATA
   // ========================================
-  // Try to load lesson from state, then from savedLessons, or use URL param
+  // Try in-app navigation payload, then savedLessons (URL segment is fallback key only)
   const getLessonData = () => {
-    if (state?.lesson && state?.skill) {
-      return { lesson: state.lesson, skill: state.skill };
+    if (bridgeState?.lesson && bridgeState?.skill) {
+      return { lesson: bridgeState.lesson, skill: bridgeState.skill };
     }
-    
+
     // Try to load from saved lessons
-    const decodedTitle = urlTitle ? decodeURIComponent(urlTitle) : null;
+    const decodedTitle = typeof urlTitle === "string" ? decodeURIComponent(urlTitle) : null;
     if (decodedTitle && user?.savedLessons?.[decodedTitle]) {
       const saved = user.savedLessons[decodedTitle];
       return { lesson: saved.lesson, skill: saved.skill };
     }
-    
+
     return null;
   };
 
@@ -56,14 +60,14 @@ export default function LessonPage() {
   // 🎮 GAME STATE MANAGEMENT
   // ========================================
   const [gameState, setGameState] = useState({ completed: false }); // Overall lesson completion
-  const [challenges, setChallenges] = useState([]);                 // Array of generated challenges
-  const [currentIndex, setCurrentIndex] = useState(0);              // Current challenge index
-  const [answer, setAnswer] = useState("");                        // User's current answer
-  const [feedback, setFeedback] = useState("");                   // Current feedback message
-  const [isEvaluating, setIsEvaluating] = useState(false);         // Evaluation loading state
-  const [evaluationResult, setEvaluationResult] = useState(null);  // Latest evaluation result
-  const [attempts, setAttempts] = useState(0);                     // Number of attempts for current challenge
-  const [showNextButton, setShowNextButton] = useState(false);    // Show next challenge button after correct answer
+  const [challenges, setChallenges] = useState([]); // Array of generated challenges
+  const [currentIndex, setCurrentIndex] = useState(0); // Current challenge index
+  const [answer, setAnswer] = useState(""); // User's current answer
+  const [feedback, setFeedback] = useState(""); // Current feedback message
+  const [isEvaluating, setIsEvaluating] = useState(false); // Evaluation loading state
+  const [evaluationResult, setEvaluationResult] = useState(null); // Latest evaluation result
+  const [attempts, setAttempts] = useState(0); // Number of attempts for current challenge
+  const [showNextButton, setShowNextButton] = useState(false); // Show next challenge button after correct answer
   const [isLoadingChallenges, setIsLoadingChallenges] = useState(false); // Loading state for challenge generation
 
   // ========================================
@@ -125,11 +129,13 @@ export default function LessonPage() {
       } catch (err) {
         console.error("SecureAI: Failed to generate lesson challenges", err);
         // Fallback challenge if AI generation fails
-        setChallenges([{ 
-          scenario: "Failed to generate scenario.", 
-          challenge: "Try again later.", 
-          hint: "Please refresh the page and try again." 
-        }]);
+        setChallenges([
+          {
+            scenario: "Failed to generate scenario.",
+            challenge: "Try again later.",
+            hint: "Please refresh the page and try again.",
+          },
+        ]);
         setIsLoadingChallenges(false);
       }
     };
@@ -166,11 +172,11 @@ export default function LessonPage() {
     // ========================================
     setIsEvaluating(true);
     setFeedback("🤔 Evaluating your answer...");
-    setAttempts(prev => prev + 1);
+    setAttempts((prev) => prev + 1);
 
     try {
       const currentChallenge = challenges[currentIndex];
-      
+
       // ========================================
       // 🤖 AI ANSWER EVALUATION
       // ========================================
@@ -193,10 +199,10 @@ export default function LessonPage() {
         // Answer is acceptable - provide positive feedback
         setFeedback(`🎉 ${evaluation.feedback}`);
         announce(`Challenge ${currentIndex + 1} completed successfully`);
-        
+
         // Update user progress
         updateUserProgress();
-        
+
         // Show next button instead of auto-advancing
         setShowNextButton(true);
       } else {
@@ -205,11 +211,11 @@ export default function LessonPage() {
         setFeedback(`📝 ${evaluation.feedback}${attemptMessage}`);
         announce(`Answer needs improvement. Please review the feedback and try again.`);
         setShowNextButton(false); // Hide next button if answer needs improvement
-        
+
         // Show suggestions for improvement
         if (evaluation.suggestions) {
           setTimeout(() => {
-            setFeedback(prev => prev + `\n\n💡 Suggestions: ${evaluation.suggestions}`);
+            setFeedback((prev) => prev + `\n\n💡 Suggestions: ${evaluation.suggestions}`);
           }, 1000);
         }
       }
@@ -240,10 +246,10 @@ export default function LessonPage() {
           ...prev.completedLessons,
           [safeSkill]: {
             ...prev.completedLessons?.[safeSkill],
-            [lesson.title]: { 
+            [lesson.title]: {
               level: currentLevel + 1,
               attempts: attempts + 1,
-              lastCompleted: new Date().toISOString()
+              lastCompleted: new Date().toISOString(),
             },
           },
         },
@@ -276,14 +282,16 @@ export default function LessonPage() {
   // Adds skill to user.skills when lesson is completed
   const completeLesson = () => {
     setGameState({ completed: true });
-    announce(`Lesson ${DOMPurify.sanitize(lesson?.title || "completed")} completed! Congratulations!`);
-    
+    announce(
+      `Lesson ${DOMPurify.sanitize(lesson?.title || "completed")} completed! Congratulations!`
+    );
+
     // Add skill to user.skills if not already present
     if (skill && lesson) {
       setUser((prev) => {
         const safeSkill = DOMPurify.sanitize(skill);
         const currentSkills = prev.skills || [];
-        
+
         // Only add if skill is not already in the list
         if (!currentSkills.includes(safeSkill)) {
           return {
@@ -294,33 +302,53 @@ export default function LessonPage() {
         return prev;
       });
     }
-    
+
     // Navigate to skills dashboard to show skills gained
     setTimeout(() => {
-      navigate("/skills-dashboard");
+      router.push("/skills-dashboard");
     }, 2000);
   };
 
+  useEffect(() => {
+    if (loading || lesson) return;
+    const t = setTimeout(() => router.push("/dashboard"), 1500);
+    return () => clearTimeout(t);
+  }, [loading, lesson, router]);
+
   if (loading) return <div className="screen p-6 text-center text-gray-300">Loading lesson...</div>;
   if (!lesson) {
-    setTimeout(() => navigate("/dashboard"), 1500);
-    return <div className="screen p-6 text-center text-gray-300">No lesson data found. Returning to dashboard...</div>;
+    return (
+      <div className="screen p-6 text-center text-gray-300">
+        No lesson data found. Returning to dashboard...
+      </div>
+    );
   }
 
   const currentChallenge = challenges[currentIndex] || {};
 
   return (
     <div className="screen lesson-page text-gray-100">
-      <div className="screen-header flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-purple-400">{DOMPurify.sanitize(lesson.title)}</h2>
-        <button className="auth-btn" onClick={() => navigate("/dashboard")}>Back to Dashboard</button>
-      </div>
+      <header className="challenge-header" role="banner">
+        <div className="challenge-title">
+          <div className="challenge-kicker">
+            {DOMPurify.sanitize(skill || "Skill")} • Challenge {currentIndex + 1}/
+            {Math.max(1, challenges.length)}
+          </div>
+          <h2 className="challenge-heading">{DOMPurify.sanitize(lesson.title)}</h2>
+        </div>
+        <div className="challenge-actions" role="toolbar" aria-label="Challenge actions">
+          <button type="button" className="btn btn-secondary" onClick={() => router.push("/dashboard")}>
+            Back
+          </button>
+        </div>
+      </header>
 
-      <motion.div
-        className="bg-purple-900/30 p-6 rounded-xl shadow-lg"
-        initial={{ opacity: 0, y: 20 }}
+      <motion.section
+        className="focus-panel"
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.35 }}
+        aria-label="Challenge workspace"
       >
         {isLoadingChallenges ? (
           <div className="ai-loader" role="status" aria-live="polite" aria-busy="true">
@@ -329,17 +357,14 @@ export default function LessonPage() {
           </div>
         ) : !gameState.completed ? (
           <>
-            {/* Scenario */}
-            <p className="text-gray-300 mb-4 italic">{currentChallenge.scenario || "Generating scenario..."}</p>
+            <div className="challenge-copy">
+              <p className="challenge-scenario">{currentChallenge.scenario || "Generating scenario..."}</p>
+              <p className="challenge-prompt">{currentChallenge.challenge || "Generating challenge..."}</p>
+            </div>
 
-            {/* Challenge */}
-            <h4 className="text-lg font-semibold text-purple-300 mb-2">Challenge {currentIndex + 1}:</h4>
-            <p className="text-gray-200 mb-4">{currentChallenge.challenge || "Generating challenge..."}</p>
-
-            {/* Answer Input */}
             <textarea
-              className="w-full p-3 bg-purple-800/40 rounded-lg text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              rows={4}
+              className="focus-editor"
+              rows={8}
               placeholder="Write your answer here..."
               value={answer}
               onChange={(e) => {
@@ -351,43 +376,36 @@ export default function LessonPage() {
               }}
             />
 
-            <div className="flex gap-3 mt-4">
+            <div className="challenge-cta" role="toolbar" aria-label="Submission actions">
               {!showNextButton ? (
                 <>
-                  <button 
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed" 
-                    onClick={handleCompleteChallenge}
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      void handleCompleteChallenge().catch((err) => {
+                        console.error(err);
+                        setIsEvaluating(false);
+                        setFeedback("⚠️ Unable to evaluate your answer. Please try again.");
+                      });
+                    }}
                     disabled={isEvaluating || !answer.trim()}
                   >
-                    {isEvaluating ? "Evaluating..." : "Submit Answer"}
+                    {isEvaluating ? "Evaluating..." : "Submit"}
                   </button>
-                  <button 
-                    className="px-4 py-2 rounded-lg text-white" 
-                    style={{
-                      background: 'linear-gradient(90deg, #7c3aed, #00d8ff)',
-                      boxShadow: '0 0 20px rgba(124, 58, 237, 0.6)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = 'linear-gradient(90deg, #00d8ff, #7c3aed)';
-                      e.target.style.boxShadow = '0 0 35px rgba(0, 216, 255, 0.8)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = 'linear-gradient(90deg, #7c3aed, #00d8ff)';
-                      e.target.style.boxShadow = '0 0 20px rgba(124, 58, 237, 0.6)';
-                    }}
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
                     onClick={() => setFeedback(`💡 Hint: ${currentChallenge.hint}`)}
                   >
-                    Need Hint
+                    Hint
                   </button>
                 </>
               ) : (
-                <button 
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-semibold" 
-                  onClick={advanceToNextChallenge}
-                  style={{
-                    background: 'linear-gradient(90deg, #10b981, #059669)',
-                    boxShadow: '0 0 20px rgba(16, 185, 129, 0.6)'
-                  }}
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={() => advanceToNextChallenge()}
                 >
                   {currentIndex + 1 < challenges.length ? "Next Challenge →" : "Complete Lesson →"}
                 </button>
@@ -396,7 +414,7 @@ export default function LessonPage() {
 
             {/* Enhanced Feedback Display */}
             {feedback && (
-              <motion.div 
+              <motion.div
                 className="mt-4 p-4 rounded-lg"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -409,7 +427,9 @@ export default function LessonPage() {
                       <span className="text-green-400 text-xl">✅</span>
                       <span className="text-green-300 font-semibold">Great Answer!</span>
                       {evaluationResult.score && (
-                        <span className="text-green-400 text-sm">({evaluationResult.score}/100)</span>
+                        <span className="text-green-400 text-sm">
+                          ({evaluationResult.score}/100)
+                        </span>
                       )}
                     </div>
                     <p className="text-green-200 whitespace-pre-line">{feedback}</p>
@@ -423,7 +443,9 @@ export default function LessonPage() {
                       <span className="text-yellow-400 text-xl">📝</span>
                       <span className="text-yellow-300 font-semibold">Keep Improving!</span>
                       {evaluationResult.score && (
-                        <span className="text-yellow-400 text-sm">({evaluationResult.score}/100)</span>
+                        <span className="text-yellow-400 text-sm">
+                          ({evaluationResult.score}/100)
+                        </span>
                       )}
                     </div>
                     <p className="text-yellow-200 whitespace-pre-line">{feedback}</p>
@@ -439,20 +461,24 @@ export default function LessonPage() {
 
                 {/* Attempt Counter */}
                 {attempts > 0 && (
-                  <div className="mt-2 text-sm text-gray-400">
-                    Attempts: {attempts}
-                  </div>
+                  <div className="mt-2 text-sm text-gray-400">Attempts: {attempts}</div>
                 )}
               </motion.div>
             )}
           </>
         ) : (
-          <motion.div className="text-center mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div
+            className="text-center mt-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <h3 className="text-xl font-bold text-green-400 mb-4">🎉 Lesson Completed!</h3>
-            <p className="text-gray-300 mb-4">You've gained a new skill! Redirecting to skills dashboard...</p>
+            <p className="text-gray-300 mb-4">
+              You've gained a new skill! Redirecting to skills dashboard...
+            </p>
           </motion.div>
         )}
-      </motion.div>
+      </motion.section>
     </div>
   );
 }

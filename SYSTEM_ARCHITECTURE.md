@@ -4,78 +4,71 @@ This document describes the current architecture of the SkillTree application.
 
 ## 1) High-Level Overview
 
-SkillTree is primarily a client-side React application built with Vite. It uses React Router for navigation, React Context for app-wide state, and browser `localStorage` for lightweight persistence.
+SkillTree is a **Next.js 15 (App Router)** application: file-based routes under `app/`, shared providers in `app/providers.jsx`, and React Context for client state. Persistence uses browser **`localStorage`** (and **`sessionStorage`** for one-shot lesson navigation payloads).
 
-There is no production backend service currently wired into app routing. Lesson generation is currently performed in frontend utilities (and a standalone backend-like component exists in `src/backend/server.js`, but it is not a deployed API server).
+There is no production backend API in the routing layer. Lesson generation runs in client utilities and optional OpenAI calls; `src/backend/server.js` is a **React component** (legacy name), not an HTTP server.
 
 ## 2) Architecture Diagram
 
 ```mermaid
 flowchart TD
-    U[User Browser] --> V[Vite + React SPA]
-    V --> R[React Router]
-    V --> C1[UserContext]
-    V --> C2[ThemeContext]
-    V --> C3[AccessibilityContext]
-    V --> LS[(localStorage)]
-    V --> G[Lesson Generation Utils]
-    G --> LP[Lesson Pages + Challenges]
+    U[User Browser] --> N[Next.js App Router]
+    N --> P[Providers: Theme / A11y / User]
+    N --> C1[UserContext]
+    N --> C2[ThemeContext]
+    N --> C3[AccessibilityContext]
+    N --> LS[(localStorage)]
+    N --> SS[(sessionStorage lesson bridge)]
+    N --> G[Lesson generation utils]
+    G --> LP[Lesson pages + challenges]
 ```
 
 ## 3) Core Building Blocks
 
-- **Application Shell**
-  - Entry point: `src/main.jsx`
-  - Root routing and page composition: `src/App.jsx`
-- **Feature UI Layer**
-  - Pages/components in `src/components/` (onboarding, dashboard, lesson, profile, accessibility)
-- **State Layer**
-  - `src/Context/UserContext.jsx` for user/session/progress state
-  - `src/Context/ThemeContext.jsx` for light/dark mode
-  - `src/Context/AccessibilityContext.jsx` for accessibility preferences
-- **Domain/Logic Layer**
-  - `src/utils/generateLessons.js`
-  - `src/utils/generateLessonChallenge.js`
-  - `src/utils/evaluateAnswer.js`
-- **Persistence Layer**
-  - Browser `localStorage` (client-side persistence)
+- **Application shell**
+  - Root layout: `app/layout.jsx` (metadata, `metadataBase`, global CSS)
+  - Providers: `app/providers.jsx` (client boundaries)
+- **Routes**
+  - `app/**/page.jsx` — see README for URL map
+- **Feature UI**
+  - `src/components/` — onboarding, dashboard, lesson, profile, accessibility
+- **State**
+  - `src/Context/UserContext.jsx`, `ThemeContext.jsx`, `AccessibilityContext.jsx`
+- **Domain / logic**
+  - `src/utils/generateLessons.js`, `generateLessonChallenge.js`, `evaluateAnswer.js`
+- **Navigation bridge**
+  - `src/lib/lessonNavigation.js` — replaces React Router `location.state` for lesson deep links
 
 ## 4) Runtime Flow
 
-1. User opens SPA and enters onboarding flow (`SignIn` / `CreateAccount` / `Career` / optional `Upload`).
-2. User answers and profile info are placed into Context + localStorage.
-3. Lesson utilities generate skill tree content and challenge data.
-4. User progresses through dashboard and lesson routes.
-5. Accessibility and theme preferences are applied globally through Context providers.
+1. User opens the app and goes through onboarding (`/signin`, `/create-account`, `/career`, optional `/upload`).
+2. Context + `localStorage` hold profile and progress.
+3. Lesson utilities generate tree content and challenges (optionally calling AI when configured).
+4. User navigates dashboard and `/lesson/[title]` routes; lesson context may be passed via `sessionStorage` + encoded title.
 
 ## 5) External Dependencies
 
-- Framework/runtime: React 19 + Vite
-- Routing: React Router v6
-- UI/UX: Framer Motion, Radix UI, Lucide
-- Sanitization: DOMPurify
-- Styling: Tailwind CSS + PostCSS/Autoprefixer
+- **Framework:** Next.js 15, React 19
+- **UI / motion:** Framer Motion, Radix UI, Lucide
+- **Sanitization:** isomorphic-dompurify
+- **Styling:** Tailwind CSS v4 + PostCSS
 
 ## 6) Deployment Model
 
-- Target platform: static hosting (Vercel, based on current repository config)
-- Build artifact: `dist/`
-- App type: single-page application with rewrite to `/`
+- **Target:** Vercel (or any Node host running `next start`)
+- **Build output:** `.next/` (not a static `dist/` export unless explicitly configured)
+- **CI:** GitHub Actions — lint, Prettier check, `next build` (see `.github/workflows/ci.yml`)
 
 ## 7) Current Constraints and Risks
 
 - Authentication is client-side only (not production-grade).
-- Progress/session data relies on localStorage (device/browser scoped).
-- No stable backend API for persistent user data.
-- `src/backend/server.js` is a React component, not an Express/Node API server.
-- If an API key is used directly in frontend runtime, it is exposed to clients; move sensitive calls to a backend service.
+- Progress is device-scoped via `localStorage`.
+- No first-class backend for durable user data.
+- **`NEXT_PUBLIC_` API keys are visible in the browser**; production systems should proxy AI calls through server routes or a backend.
 
-## 8) Recommended Target Architecture (Next Step)
+## 8) Recommended Target Architecture
 
-Near-term improvement path:
-
-1. Add a minimal backend API (`/api/auth`, `/api/progress`, `/api/lessons`).
-2. Move AI calls and secret keys to server-side only.
-3. Persist users, progress, and lesson outcomes in a database.
-4. Replace client-only auth with secure session or token-based auth.
-
+1. Add Route Handlers or a BFF: `/api/lessons`, `/api/progress`.
+2. Move AI calls and secrets server-side; use short-lived tokens for the client if needed.
+3. Persist users and progress in a database (e.g. via Neon, Postgres, or a hosted auth product).
+4. Replace demo auth with session-based or token auth aligned to your threat model.

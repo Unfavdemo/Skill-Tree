@@ -11,6 +11,7 @@
 // - XSS prevention through input sanitization (implemented in components)
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { parseStoredJson } from "../lib/parseStoredJson";
 
 // ========================================
 // 🏗️ CONTEXT CREATION
@@ -30,8 +31,8 @@ export const UserProvider = ({ children }) => {
   // ========================================
   // 📊 STATE MANAGEMENT
   // ========================================
-  const [user, setUserState] = useState(null);        // Current user data
-  const [loading, setLoading] = useState(true);      // Loading state for initial data fetch
+  const [user, setUserState] = useState(null); // Current user data
+  const [loading, setLoading] = useState(true); // Loading state for initial data fetch
 
   // ========================================
   // 🔄 INITIAL DATA LOADING
@@ -45,27 +46,27 @@ export const UserProvider = ({ children }) => {
     try {
       const stored = localStorage.getItem("user");
       if (stored) {
-        // Decode Base64-encoded user data with Unicode support
-        const decoded = decodeURIComponent(escape(atob(stored)));
-        const parsed = JSON.parse(decoded);
-        
-        // If user is logged in, verify account still exists in registry
-        if (parsed.loggedIn && parsed.username) {
+        const parsed = parseStoredJson(stored);
+        if (parsed === null) {
+          console.warn("SkillTree: Invalid or corrupted user data in localStorage; clearing.");
+          localStorage.removeItem("user");
+        } else if (parsed.loggedIn && parsed.username) {
           try {
             const accountsData = localStorage.getItem("accounts");
             if (accountsData) {
-              const accountsDecoded = decodeURIComponent(escape(atob(accountsData)));
-              const accounts = JSON.parse(accountsDecoded);
-              
-              // If account exists, merge with latest registry data
-              if (accounts[parsed.username]) {
+              const accounts = parseStoredJson(accountsData);
+              if (accounts === null) {
+                console.warn(
+                  "SkillTree: Could not read accounts registry; using session user only."
+                );
+                setUserState(parsed);
+              } else if (accounts[parsed.username]) {
                 const accountData = accounts[parsed.username];
                 setUserState({
                   ...accountData,
                   loggedIn: true,
                 });
               } else {
-                // Account not found, clear session
                 localStorage.removeItem("user");
                 setUserState(null);
               }
@@ -93,21 +94,21 @@ export const UserProvider = ({ children }) => {
   // Syncs user data with the accounts registry for persistent storage
   const syncAccountRegistry = (userData) => {
     if (!userData || !userData.username) return;
-    
+
     try {
       // Get accounts registry
       const accountsData = localStorage.getItem("accounts");
       if (accountsData) {
-        const decoded = decodeURIComponent(escape(atob(accountsData)));
-        const accounts = JSON.parse(decoded);
-        
+        const accounts = parseStoredJson(accountsData);
+        if (accounts == null || typeof accounts !== "object") return;
+
         // Update the account data (excluding loggedIn flag which is session-only)
         const { loggedIn, ...accountData } = userData;
         accounts[userData.username] = {
           ...accounts[userData.username],
           ...accountData,
         };
-        
+
         // Save back to registry
         const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(accounts))));
         localStorage.setItem("accounts", encoded);
@@ -139,7 +140,7 @@ export const UserProvider = ({ children }) => {
           // Encode user data to Base64 with Unicode support before storing
           const jsonString = JSON.stringify(next);
           localStorage.setItem("user", btoa(unescape(encodeURIComponent(jsonString))));
-          
+
           // Sync with accounts registry for persistent storage
           syncAccountRegistry(next);
         }
@@ -161,20 +162,20 @@ export const UserProvider = ({ children }) => {
   // - Merges provided data with defaults
   const initializeUser = (data) => {
     const newUser = {
-      username: data.username || "",                    // User's display name
-      email: data.email || "",                         // Contact email
-      industry: data.industry || "",                   // Career field
-      resumeUploaded: data.resumeUploaded || false,    // Resume upload status
-      resumeSkills: data.resumeSkills || [],           // Skills extracted from resume
-      completedLessons: data.completedLessons || {},  // Progress tracking: skill -> lesson -> level
-      savedLessons: data.savedLessons || {},            // Saved lesson data: lessonTitle -> {lesson, skill, challenges}
-      availableSkills: data.availableSkills || [],       // Available skills for skill tree (persisted)
-      skillLessons: data.skillLessons || {},            // Saved lessons by skill: skill -> [lessons]
-      skills: data.skills || [],                       // User's skill list (completed skills only)
-      lessons: data.lessons || [],                     // Available lessons
-      careerAnswers: data.careerAnswers || {},        // Career questionnaire responses
-      loggedIn: true,                                  // Authentication flag
-      ...data,                                         // Merge any additional data
+      username: data.username || "", // User's display name
+      email: data.email || "", // Contact email
+      industry: data.industry || "", // Career field
+      resumeUploaded: data.resumeUploaded || false, // Resume upload status
+      resumeSkills: data.resumeSkills || [], // Skills extracted from resume
+      completedLessons: data.completedLessons || {}, // Progress tracking: skill -> lesson -> level
+      savedLessons: data.savedLessons || {}, // Saved lesson data: lessonTitle -> {lesson, skill, challenges}
+      availableSkills: data.availableSkills || [], // Available skills for skill tree (persisted)
+      skillLessons: data.skillLessons || {}, // Saved lessons by skill: skill -> [lessons]
+      skills: data.skills || [], // User's skill list (completed skills only)
+      lessons: data.lessons || [], // Available lessons
+      careerAnswers: data.careerAnswers || {}, // Career questionnaire responses
+      loggedIn: true, // Authentication flag
+      ...data, // Merge any additional data
     };
     setUser(newUser);
   };
@@ -198,9 +199,7 @@ export const UserProvider = ({ children }) => {
   // - Exposes user state and helper functions
   // - Makes authentication and user data available globally
   return (
-    <UserContext.Provider
-      value={{ user, setUser, initializeUser, clearUser, loading }}
-    >
+    <UserContext.Provider value={{ user, setUser, initializeUser, clearUser, loading }}>
       {children}
     </UserContext.Provider>
   );

@@ -18,15 +18,17 @@ const ThemeContext = createContext();
 // 🎯 THEME PROVIDER COMPONENT
 // ========================================
 export const ThemeProvider = ({ children }) => {
-  // Check for saved theme preference or default to light
-  const [isDarkMode, setIsDarkMode] = useState(() => {
+  // Always match SSR on the first client render; read localStorage after mount to avoid hydration #418
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem("theme");
-      return saved === "dark";
+      setIsDarkMode(saved === "dark");
     } catch {
-      return false;
+      /* ignore */
     }
-  });
+  }, []);
 
   // Apply theme class to document root on mount and when theme changes
   useEffect(() => {
@@ -52,9 +54,7 @@ export const ThemeProvider = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>{children}</ThemeContext.Provider>
   );
 };
 
@@ -68,4 +68,3 @@ export const useTheme = () => {
   }
   return context;
 };
-

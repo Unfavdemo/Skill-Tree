@@ -1,17 +1,18 @@
+"use client";
+
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useUser } from "../Context/UserContext";
-import { useTheme } from "../Context/ThemeContext";
 import { useAccessibility } from "../Context/AccessibilityContext";
-import { useNavigate } from "react-router-dom";
+import { setLessonNavigationState } from "@/lib/lessonNavigation";
 import { generateLessons } from "../utils/generateLessons";
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
 import "../styles/Profile.css";
 
 export default function Profile() {
   const { user, setUser } = useUser();
-  const { isDarkMode, toggleTheme } = useTheme();
   const { announce } = useAccessibility();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const [username, setUsername] = useState(user?.username || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -29,9 +30,12 @@ export default function Profile() {
     if (!file) return;
 
     // ✅ Only allow text, PDF, or DOC/DOCX; max 5MB
-    const allowedTypes = ["text/plain", "application/pdf", 
-      "application/msword", 
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    const allowedTypes = [
+      "text/plain",
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
     if (!allowedTypes.includes(file.type)) {
       alert("Unsupported file type. Use TXT, PDF, or DOC/DOCX.");
       return;
@@ -65,24 +69,33 @@ export default function Profile() {
         resumeText,
       };
 
-      setUser(updatedUser);
-      // Note: setUser already saves to localStorage with proper encoding
-
-      // Regenerate lessons/skills
-      const newSkills = await generateLessons({
+      const newLessons = await generateLessons({
         skills: [],
-        careerAnswers: updatedUser.careerAnswers || [],
+        careerAnswers: updatedUser.careerAnswers || {},
         resumeSkills: resumeText ? [resumeText] : [],
-        challenges: 3,
+        resumeUploaded: updatedUser.resumeUploaded || false,
       });
 
+      const availableSkills = Array.isArray(newLessons)
+        ? newLessons.map((l) => sanitize(l.title)).filter(Boolean)
+        : [];
+
+      setUser(updatedUser);
+
+      const mergedUser =
+        availableSkills.length > 0
+          ? {
+              ...updatedUser,
+              availableSkills,
+              skillLessons: {},
+            }
+          : updatedUser;
+
+      if (availableSkills.length > 0) {
+        setUser(mergedUser);
+      }
+
       announce("Profile saved successfully");
-
-      // Don't override existing completed skills
-      // Only regenerate available lessons, not skills gained
-      // Skills are only added when lessons are completed
-      // Note: We keep the existing user.skills as those are earned through completion
-
       setFeedback("✅ Profile updated and skills regenerated!");
     } catch (err) {
       console.error("SecureAI: Failed to update profile:", err);
@@ -90,20 +103,6 @@ export default function Profile() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSignOut = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-    navigate("/");
-  };
-
-  // Survey URL - Update this with your actual survey link
-  const SURVEY_URL = "https://forms.gle/rhGhw52FcSNx3t9o9"; // Replace with your survey URL
-
-  const handleSurveyClick = () => {
-    window.open(SURVEY_URL, "_blank", "noopener,noreferrer");
-    announce("Opening survey in new tab");
   };
 
   // XP and Level calculation
@@ -114,56 +113,36 @@ export default function Profile() {
     <div className="screen profile-container">
       {/* Profile Header */}
       <header className="profile-header" role="banner">
-        <div className="flex justify-between items-center w-full">
-          <h1>Profile</h1>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/accessibility")}
-              className="theme-toggle auth-btn bg-purple-700 hover:bg-purple-600 text-white px-3 py-2 rounded text-lg"
-              aria-label="Accessibility settings"
-              type="button"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  navigate("/accessibility");
-                }
-              }}
-              title="Accessibility settings"
-            >
-              ♿ Accessibility
-            </button>
-            <button
-              onClick={toggleTheme}
-              className="theme-toggle auth-btn bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-lg"
-              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-              type="button"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  toggleTheme();
-                }
-              }}
-              title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-            </button>
+        <div className="flex w-full justify-between items-start gap-4">
+          <div>
+            <h1 id="profile-title">Profile</h1>
+            <p className="profile-header-lede">Update your details and rebuild your personalized skill offerings.</p>
+          </div>
+          <div className="profile-header-meta" aria-label="Progress summary">
+            <span className="profile-level-pill">Level {level}</span>
+            <span className="profile-xp-pill">{xp} XP</span>
           </div>
         </div>
       </header>
 
       {/* User Info Form */}
       <main role="main" aria-label="Profile settings">
-        <form 
+        <form
           className="profile-form"
           onSubmit={(e) => {
             e.preventDefault();
-            handleSave();
+            void handleSave().catch((err) => {
+              console.error(err);
+              setLoading(false);
+              setFeedback("❌ Failed to update profile. Try again.");
+            });
           }}
           aria-label="Profile information form"
         >
           <fieldset>
             <legend className="sr-only">Personal Information</legend>
-            
+
+            <div className="profile-fields-grid">
             <div className="profile-field">
               <label htmlFor="username-input">
                 Username
@@ -204,7 +183,7 @@ export default function Profile() {
               </span>
             </div>
 
-            <div className="profile-field">
+            <div className="profile-field profile-field-span-2">
               <label htmlFor="industry-select">
                 Industry
                 <span className="sr-only">: optional field</span>
@@ -225,7 +204,9 @@ export default function Profile() {
                   "Manufacturing / Engineering",
                   "Consulting / Services",
                 ].map((ind) => (
-                  <option key={ind} value={ind}>{ind}</option>
+                  <option key={ind} value={ind}>
+                    {ind}
+                  </option>
                 ))}
               </select>
               <span id="industry-help" className="sr-only">
@@ -233,11 +214,14 @@ export default function Profile() {
               </span>
             </div>
 
-            <div className="profile-field">
+            <div className="profile-field profile-field-span-2 profile-field-file">
               <label htmlFor="resume-upload">
                 Upload Resume
-                <span className="sr-only">: optional, accepts TXT, PDF, DOC, or DOCX files up to 5MB</span>
+                <span className="sr-only">
+                  : optional, accepts TXT, PDF, DOC, or DOCX files up to 5MB
+                </span>
               </label>
+              <div className="profile-file-row">
               <input
                 id="resume-upload"
                 type="file"
@@ -245,8 +229,10 @@ export default function Profile() {
                 onChange={handleResumeUpload}
                 aria-describedby="resume-help"
               />
+              </div>
               <span id="resume-help" className="sr-only">
-                Upload your resume. Accepted formats: TXT, PDF, DOC, DOCX. Maximum file size: 5MB. This field is optional.
+                Upload your resume. Accepted formats: TXT, PDF, DOC, DOCX. Maximum file size: 5MB.
+                This field is optional.
               </span>
               {resumeFile && (
                 <span className="file-selected" aria-live="polite">
@@ -254,34 +240,28 @@ export default function Profile() {
                 </span>
               )}
             </div>
+            </div>
           </fieldset>
 
           <div className="profile-actions" role="toolbar" aria-label="Profile actions">
             <button
               className="profile-btn profile-btn-primary"
-              onClick={handleSave}
               disabled={loading}
               type="submit"
               aria-busy={loading}
               aria-label={loading ? "Saving profile changes" : "Save profile and regenerate skills"}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleSave();
-                }
-              }}
             >
               {loading ? "Saving..." : "Save & Regenerate Skills"}
             </button>
             <button
               className="profile-btn profile-btn-secondary"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => router.push("/dashboard")}
               type="button"
               aria-label="Return to dashboard"
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  navigate("/dashboard");
+                  router.push("/dashboard");
                 }
               }}
             >
@@ -290,7 +270,7 @@ export default function Profile() {
           </div>
 
           {feedback && (
-            <div 
+            <div
               className={`profile-feedback ${
                 feedback.includes("✅") ? "profile-feedback-success" : "profile-feedback-error"
               }`}
@@ -328,7 +308,7 @@ export default function Profile() {
               ))}
             </ul>
           ) : (
-            <p style={{ color: '#9ca3af' }} aria-live="polite">
+            <p className="profile-empty-message" aria-live="polite">
               No skills gained yet.
             </p>
           )}
@@ -339,44 +319,62 @@ export default function Profile() {
       <section className="profile-lessons" aria-label="Previous lessons">
         <h2>Previous Lessons</h2>
         {user.savedLessons && Object.keys(user.savedLessons).length > 0 ? (
-          <ul role="list" aria-label={`${Object.keys(user.savedLessons).length} previous lessons`}>
+          <ul
+            className="profile-lessons-list"
+            role="list"
+            aria-label={`${Object.keys(user.savedLessons).length} previous lessons`}
+          >
             {Object.entries(user.savedLessons).map(([lessonTitle, lessonData]) => {
               const lesson = lessonData.lesson;
               const skill = lessonData.skill;
               const completedData = user.completedLessons?.[skill]?.[lessonTitle];
               const level = completedData?.level || 0;
-              
+
               return (
-                <li 
+                <li
                   key={lessonTitle}
                   role="button"
                   tabIndex={0}
-                  onClick={() => navigate(`/lesson/${encodeURIComponent(lessonTitle)}`, {
-                    state: { lesson, skill }
-                  })}
+                  onClick={() => {
+                    setLessonNavigationState({ lesson, skill });
+                    router.push(`/lesson/${encodeURIComponent(lessonTitle)}`);
+                  }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
+                    if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      navigate(`/lesson/${encodeURIComponent(lessonTitle)}`, {
-                        state: { lesson, skill }
-                      });
+                      setLessonNavigationState({ lesson, skill });
+                      router.push(`/lesson/${encodeURIComponent(lessonTitle)}`);
                     }
                   }}
                   className="profile-lesson-item"
-                  aria-label={`${sanitize(lessonTitle)}${skill ? ` for skill ${sanitize(skill)}` : ''}${level > 0 ? `, completed at level ${level}` : ''}. Click to open lesson.`}
+                  aria-label={`${sanitize(lessonTitle)}${skill ? ` for skill ${sanitize(skill)}` : ""}${level > 0 ? `, completed at level ${level}` : ""}. Click to open lesson.`}
                   style={{
-                    cursor: 'pointer',
-                    padding: '0.75rem',
-                    marginBottom: '0.5rem',
-                    borderRadius: '8px',
-                    background: 'rgba(185, 144, 255, 0.1)',
-                    transition: 'all 0.2s ease',
-                    border: '1px solid rgba(185, 144, 255, 0.2)'
+                    cursor: "pointer",
+                    padding: "0.75rem",
+                    marginBottom: "0.5rem",
+                    borderRadius: "8px",
+                    background: "rgba(185, 144, 255, 0.1)",
+                    transition: "all 0.2s ease",
+                    border: "1px solid rgba(185, 144, 255, 0.2)",
                   }}
                 >
-                  <strong style={{ color: '#b990ff' }}>{sanitize(lessonTitle)}</strong>
-                  {skill && <span style={{ color: '#d3d8ff', marginLeft: '0.5rem' }} aria-label={`Skill: ${sanitize(skill)}`}>• {sanitize(skill)}</span>}
-                  {level > 0 && <span style={{ color: '#9ca3af', marginLeft: '0.5rem' }} aria-label={`Level ${level}`}>(Level {level})</span>}
+                  <strong style={{ color: "#b990ff" }}>{sanitize(lessonTitle)}</strong>
+                  {skill && (
+                    <span
+                      style={{ color: "#d3d8ff", marginLeft: "0.5rem" }}
+                      aria-label={`Skill: ${sanitize(skill)}`}
+                    >
+                      • {sanitize(skill)}
+                    </span>
+                  )}
+                  {level > 0 && (
+                    <span
+                      style={{ color: "#9ca3af", marginLeft: "0.5rem" }}
+                      aria-label={`Level ${level}`}
+                    >
+                      (Level {level})
+                    </span>
+                  )}
                 </li>
               );
             })}
@@ -395,41 +393,12 @@ export default function Profile() {
             ))}
           </ul>
         ) : (
-          <p style={{ color: '#9ca3af' }} aria-live="polite">No lessons completed yet.</p>
+          <p className="profile-empty-message" aria-live="polite">
+            No lessons completed yet.
+          </p>
         )}
       </section>
 
-      {/* Bottom Actions - Survey and Sign Out */}
-      <div className="profile-actions profile-actions-bottom">
-        <button
-          className="profile-btn profile-btn-survey"
-          onClick={handleSurveyClick}
-          type="button"
-          aria-label="Take our survey"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleSurveyClick();
-            }
-          }}
-        >
-          📝 Take Survey
-        </button>
-        <button
-          onClick={handleSignOut}
-          className="profile-btn profile-btn-danger"
-          type="button"
-          aria-label="Sign out of your account"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleSignOut();
-            }
-          }}
-        >
-          Sign Out
-        </button>
-      </div>
     </div>
   );
 }

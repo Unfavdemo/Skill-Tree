@@ -1,3 +1,5 @@
+"use client";
+
 // src/components/AccessibilitySettings.jsx
 // ========================================
 // ♿ ACCESSIBILITY SETTINGS COMPONENT
@@ -8,37 +10,30 @@
 // - Cognitive support (simplified navigation, clear layouts)
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useAccessibility } from "../Context/AccessibilityContext";
 import { motion } from "framer-motion";
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
 
 const sanitize = (value) => DOMPurify.sanitize(value);
 
 export default function AccessibilitySettings() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { settings, updateSetting, toggleSetting, resetSettings, announce } = useAccessibility();
 
-
   // Setting toggle component
-  const SettingToggle = ({ 
-    label, 
-    description, 
-    settingKey, 
-    icon,
-    disabled = false 
-  }) => {
+  const SettingToggle = ({ label, description, settingKey, icon, disabled = false }) => {
     const handleToggle = (e) => {
       if (e) {
         e.preventDefault();
         e.stopPropagation();
         e.nativeEvent?.stopImmediatePropagation();
       }
-      
+
       if (disabled) {
         return false;
       }
-      
+
       const newValue = !settings[settingKey];
       toggleSetting(settingKey);
       announce(`${sanitize(label)} ${newValue ? "enabled" : "disabled"}`);
@@ -58,7 +53,9 @@ export default function AccessibilitySettings() {
       >
         <div className="setting-content">
           <div className="setting-header">
-            <span className="setting-icon" aria-hidden="true">{icon}</span>
+            <span className="setting-icon" aria-hidden="true">
+              {icon}
+            </span>
             <span className="setting-label" role="text">
               {sanitize(label)}
             </span>
@@ -85,7 +82,7 @@ export default function AccessibilitySettings() {
   };
 
   return (
-    <div className="accessibility-settings" role="main" aria-label="Accessibility settings">
+    <div className="screen accessibility-settings" role="main" aria-label="Accessibility settings">
       <motion.div
         className="accessibility-settings-container"
         initial={{ opacity: 0 }}
@@ -95,14 +92,14 @@ export default function AccessibilitySettings() {
         <header className="accessibility-header">
           <div className="accessibility-header-top">
             <button
-              onClick={() => navigate("/profile")}
+              onClick={() => router.push("/profile")}
               className="accessibility-btn accessibility-btn-back"
               type="button"
               aria-label="Return to profile page"
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  navigate("/profile");
+                  router.push("/profile");
                 }
               }}
             >
@@ -113,7 +110,8 @@ export default function AccessibilitySettings() {
             <span aria-hidden="true">♿</span> Accessibility Settings
           </h1>
           <p className="accessibility-subtitle">
-            Customize your experience to meet your needs. These settings help make SkillTree accessible to everyone.
+            Customize your experience to meet your needs. These settings help make SkillTree
+            accessible to everyone.
           </p>
         </header>
 
@@ -203,17 +201,19 @@ export default function AccessibilitySettings() {
         </section>
 
         {/* Information */}
-        <section className="accessibility-info" role="complementary" aria-label="Accessibility information">
+        <section
+          className="accessibility-info"
+          role="complementary"
+          aria-label="Accessibility information"
+        >
           <h3 className="info-title">Need More Help?</h3>
           <p className="info-text">
-            Many of these features can also be configured in your device's system accessibility settings.
-            On Windows: Settings → Accessibility
-            On Mac: System Preferences → Accessibility
-            On iOS/Android: Settings → Accessibility
+            Many of these features can also be configured in your device's system accessibility
+            settings. On Windows: Settings → Accessibility On Mac: System Preferences →
+            Accessibility On iOS/Android: Settings → Accessibility
           </p>
         </section>
       </motion.div>
     </div>
   );
 }
-

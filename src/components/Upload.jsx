@@ -1,14 +1,16 @@
+"use client";
+
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useUser } from "../Context/UserContext";
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
 
 const Upload = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user, setUser } = useUser();
   const [fileName, setFileName] = useState("");
 
-  const sanitize = (value) => DOMPurify.sanitize(value.trim());
+  const sanitize = (value) => DOMPurify.sanitize(String(value ?? "").trim());
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -60,14 +62,14 @@ const Upload = () => {
 
     setUser(updatedUser);
     // Note: setUser already saves to localStorage with proper encoding
-    navigate("/dashboard");
+    router.push("/dashboard");
   };
 
   const handleSkip = () => {
     const updatedUser = { ...user, resumeUploaded: false, resumeSkills: [] };
     setUser(updatedUser);
     // Note: setUser already saves to localStorage with proper encoding
-    navigate("/dashboard");
+    router.push("/dashboard");
   };
 
   return (

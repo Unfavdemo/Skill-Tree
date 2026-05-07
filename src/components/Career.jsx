@@ -1,11 +1,14 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useUser } from "../Context/UserContext";
-import DOMPurify from "dompurify";
+import { parseStoredJson } from "../lib/parseStoredJson";
+import DOMPurify from "isomorphic-dompurify";
 
 export default function Career() {
   const { user, setUser } = useUser();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   // 🧩 Initialize answers safely (avoid undefined structures)
   const [answers, setAnswers] = useState(() => {
@@ -95,7 +98,7 @@ export default function Career() {
       setUser(updatedUser);
       // Note: setUser already saves to localStorage with proper Unicode-safe encoding
 
-      navigate("/upload");
+      router.push("/upload");
     } catch (err) {
       console.error("SecureAI: Failed to persist user answers", err);
       alert("⚠️ Your progress could not be saved securely. Please try again.");
@@ -106,27 +109,20 @@ export default function Career() {
   useEffect(() => {
     if (!user) {
       console.warn("SecureAI: Missing user context – redirecting to login.");
-      navigate("/");
+      router.push("/");
       return;
     }
 
-    try {
-      const stored = localStorage.getItem("user");
-      if (stored) {
-        const decoded = decodeURIComponent(escape(atob(stored)));
-        JSON.parse(decoded);
-      }
-    } catch {
+    const stored = localStorage.getItem("user");
+    if (stored && parseStoredJson(stored) === null) {
       console.warn("SecureAI: Corrupted or tampered user data detected.");
       localStorage.removeItem("user");
     }
-  }, [user, navigate]);
+  }, [user, router]);
 
   // 📊 Progress bar calculation
   const progressPercent =
-    (questions.filter((q) => (answers[q.key] || []).length > 0).length /
-      questions.length) *
-    100;
+    (questions.filter((q) => (answers[q.key] || []).length > 0).length / questions.length) * 100;
 
   return (
     <div className="screen career-screen">
@@ -134,10 +130,7 @@ export default function Career() {
 
       {/* Progress bar */}
       <div className="career-progress">
-        <div
-          className="career-progress-fill"
-          style={{ width: `${progressPercent}%` }}
-        />
+        <div className="career-progress-fill" style={{ width: `${progressPercent}%` }} />
       </div>
 
       <div className="screen-content">
@@ -151,9 +144,7 @@ export default function Career() {
                   return (
                     <label
                       key={option}
-                      className={`career-option checkbox-option ${
-                        isChecked ? "checked" : ""
-                      }`}
+                      className={`career-option checkbox-option ${isChecked ? "checked" : ""}`}
                     >
                       <input
                         type="checkbox"
@@ -175,8 +166,7 @@ export default function Career() {
       </div>
 
       <div className="screen-footer">
-        Progress:{" "}
-        {questions.filter((q) => (answers[q.key] || []).length > 0).length} /{" "}
+        Progress: {questions.filter((q) => (answers[q.key] || []).length > 0).length} /{" "}
         {questions.length}
       </div>
     </div>

@@ -10,28 +10,32 @@
 // - Navigation to career questionnaire after successful registration
 // - Error handling for failed account creation
 
+"use client";
+
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useUser } from "../Context/UserContext";
-import DOMPurify from "dompurify";
+import { parseStoredJson } from "../lib/parseStoredJson";
+import DOMPurify from "isomorphic-dompurify";
 
 export default function CreateAccount() {
   // ========================================
   // 🎯 HOOKS AND STATE MANAGEMENT
   // ========================================
-  const { setUser } = useUser();                        // Access to global user context
-  const navigate = useNavigate();                       // React Router navigation hook
+  const { setUser } = useUser(); // Access to global user context
+  const router = useRouter();
 
   // ========================================
   // 📊 FORM STATE MANAGEMENT
   // ========================================
   // Manages all form data with controlled inputs
   const [form, setForm] = useState({
-    username: "",                                       // User's display name
-    email: "",                                         // Contact email address
-    password: "",                                      // User's password
-    resumeUploaded: false,                             // Resume upload status
-    resumeSkills: [],                                  // Skills extracted from resume
+    username: "", // User's display name
+    email: "", // Contact email address
+    password: "", // User's password
+    resumeUploaded: false, // Resume upload status
+    resumeSkills: [], // Skills extracted from resume
   });
 
   const [resumeFileName, setResumeFileName] = useState(""); // Track uploaded file name
@@ -51,8 +55,8 @@ export default function CreateAccount() {
     try {
       const accountsData = localStorage.getItem("accounts");
       if (accountsData) {
-        const decoded = decodeURIComponent(escape(atob(accountsData)));
-        return JSON.parse(decoded);
+        const parsed = parseStoredJson(accountsData);
+        if (parsed != null && typeof parsed === "object") return parsed;
       }
     } catch (err) {
       console.error("Failed to load accounts:", err);
@@ -194,7 +198,7 @@ export default function CreateAccount() {
       setUser(newUser);
 
       // Navigate to next onboarding step (career questionnaire)
-      navigate("/career");
+      router.push("/career");
     } catch (err) {
       // ========================================
       // 🚨 ERROR HANDLING
@@ -251,30 +255,31 @@ export default function CreateAccount() {
 
           {/* Error message display */}
           {error && (
-            <div className="auth-error" style={{
-              padding: '0.75rem',
-              borderRadius: '8px',
-              backgroundColor: 'rgba(239, 68, 68, 0.2)',
-              border: '1px solid rgba(239, 68, 68, 0.5)',
-              color: '#f87171',
-              fontSize: '0.9rem',
-              textAlign: 'center',
-              marginTop: '0.5rem'
-            }}>
+            <div
+              className="auth-error"
+              style={{
+                padding: "0.75rem",
+                borderRadius: "8px",
+                backgroundColor: "rgba(239, 68, 68, 0.2)",
+                border: "1px solid rgba(239, 68, 68, 0.5)",
+                color: "#f87171",
+                fontSize: "0.9rem",
+                textAlign: "center",
+                marginTop: "0.5rem",
+              }}
+            >
               {error}
             </div>
           )}
         </form>
 
         {/* Link back to sign in page */}
-        <Link to="/signin" className="auth-link">
+        <Link href="/signin" className="auth-link">
           Back to Sign In
         </Link>
 
         {/* Footer with copyright */}
-        <div className="auth-footer">
-          © 2025 SkillTree. Start building your skills today.
-        </div>
+        <div className="auth-footer">© 2025 SkillTree. Start building your skills today.</div>
       </div>
     </div>
   );

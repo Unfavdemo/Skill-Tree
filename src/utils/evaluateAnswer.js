@@ -9,19 +9,41 @@
 // - Handles API errors with fallback evaluation logic
 // - Sanitizes all inputs and outputs for security
 
-export async function evaluateAnswer({ 
-  userAnswer, 
-  challenge, 
-  scenario, 
-  lessonTitle, 
-  skill, 
-  industry 
+import { parseJsonObjectFromContent } from "../lib/parseAiJson";
+
+export async function evaluateAnswer({
+  userAnswer,
+  challenge,
+  scenario,
+  lessonTitle,
+  skill,
+  industry,
 }) {
   // ========================================
   // 🔑 API CONFIGURATION
   // ========================================
   // Get OpenAI API key from environment variables
-  const VITE_OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+  const VITE_OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+
+  // No API key configured → fall back immediately.
+  if (!VITE_OPENAI_API_KEY) {
+    const answerLength = userAnswer.trim().length;
+    const hasKeywords = checkForKeywords(userAnswer, challenge, skill);
+    const score = hasKeywords ? 75 : Math.min(60, Math.max(10, Math.floor(answerLength / 3)));
+    const canProceed = score >= 70;
+
+    return {
+      isCorrect: canProceed,
+      score,
+      feedback: canProceed
+        ? "Good work — your answer shows understanding."
+        : "I couldn’t verify this with AI right now. Try adding more concrete steps and specifics.",
+      suggestions: canProceed
+        ? "Nice. Consider adding one example from a real scenario."
+        : "Add a clear step-by-step plan, mention stakeholders, and explain trade-offs.",
+      canProceed,
+    };
+  }
 
   // ========================================
   // 🌐 AI API REQUEST
@@ -31,7 +53,7 @@ export async function evaluateAnswer({
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${VITE_OPENAI_API_KEY}`,
+        Authorization: `Bearer ${VITE_OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -78,8 +100,8 @@ Guidelines:
           },
           {
             role: "user",
-            content: `Please evaluate this student answer: "${userAnswer}"`
-          }
+            content: `Please evaluate this student answer: "${userAnswer}"`,
+          },
         ],
       }),
     });
@@ -89,29 +111,35 @@ Guidelines:
     // ========================================
     // Processes AI response and extracts structured evaluation data
     const data = await aiResponse.json();
-    const rawContent = data.choices?.[0]?.message?.content || "";
 
-    // ========================================
-    // 🔍 JSON EXTRACTION
-    // ========================================
-    // Safely extracts JSON object from AI response
-    const jsonStart = rawContent.indexOf("{");
-    const jsonEnd = rawContent.lastIndexOf("}") + 1;
-    const jsonString = rawContent.substring(jsonStart, jsonEnd);
-    const parsed = JSON.parse(jsonString);
+    if (!aiResponse.ok) {
+      const msg = data?.error?.message || data?.error || aiResponse.statusText;
+      console.error("SecureAI: OpenAI API error:", msg);
+      throw new Error(typeof msg === "string" ? msg : "OpenAI request failed");
+    }
+
+    const rawContent = data.choices?.[0]?.message?.content || "";
+    const parsed = parseJsonObjectFromContent(rawContent);
+
+    if (!parsed) {
+      console.warn("SecureAI: Unparseable evaluation JSON. Preview:", String(rawContent).slice(0, 200));
+      throw new Error("Invalid evaluation JSON from model");
+    }
 
     // ========================================
     // ✅ DATA VALIDATION & SANITIZATION
     // ========================================
     // Ensures evaluation has required fields with safe defaults
     return {
-      isCorrect: parsed.isCorrect || false,
-      score: Math.max(0, Math.min(100, parsed.score || 0)),
-      feedback: parsed.feedback || "Your answer has been received. Please review the challenge and try again.",
-      suggestions: parsed.suggestions || "Consider reviewing the scenario and challenge requirements.",
-      canProceed: parsed.canProceed || false,
+      isCorrect: Boolean(parsed.isCorrect),
+      score: Math.max(0, Math.min(100, Number(parsed.score) || 0)),
+      feedback:
+        parsed.feedback ||
+        "Your answer has been received. Please review the challenge and try again.",
+      suggestions:
+        parsed.suggestions || "Consider reviewing the scenario and challenge requirements.",
+      canProceed: Boolean(parsed.canProceed),
     };
-
   } catch (err) {
     // ========================================
     // 🚨 ERROR HANDLING & FALLBACK SYSTEM
@@ -124,7 +152,7 @@ Guidelines:
     // Simple keyword-based evaluation when AI is unavailable
     const answerLength = userAnswer.trim().length;
     const hasKeywords = checkForKeywords(userAnswer, challenge, skill);
-    
+
     // Basic scoring based on length and keyword presence
     let score = 0;
     if (answerLength > 50) score += 30;
@@ -138,10 +166,11 @@ Guidelines:
     return {
       isCorrect,
       score,
-      feedback: isCorrect 
+      feedback: isCorrect
         ? "Good answer! You've demonstrated understanding of the key concepts."
         : "Your answer needs more detail. Try to address the challenge more comprehensively.",
-      suggestions: "Consider providing more specific examples and explaining your reasoning step by step.",
+      suggestions:
+        "Consider providing more specific examples and explaining your reasoning step by step.",
       canProceed,
     };
   }
@@ -155,19 +184,27 @@ function checkForKeywords(userAnswer, challenge, skill) {
   const answer = userAnswer.toLowerCase();
   const challengeText = challenge.toLowerCase();
   const skillText = skill?.toLowerCase() || "";
-  
+
   // Extract potential keywords from challenge and skill
   const keywords = [
-    ...challengeText.split(' ').filter(word => word.length > 4),
-    ...skillText.split(' ').filter(word => word.length > 3),
-    'problem', 'solution', 'approach', 'strategy', 'method', 'technique',
-    'analyze', 'evaluate', 'implement', 'design', 'create', 'develop'
+    ...challengeText.split(" ").filter((word) => word.length > 4),
+    ...skillText.split(" ").filter((word) => word.length > 3),
+    "problem",
+    "solution",
+    "approach",
+    "strategy",
+    "method",
+    "technique",
+    "analyze",
+    "evaluate",
+    "implement",
+    "design",
+    "create",
+    "develop",
   ];
 
   // Check if answer contains relevant keywords
-  const keywordMatches = keywords.filter(keyword => 
-    answer.includes(keyword.toLowerCase())
-  );
+  const keywordMatches = keywords.filter((keyword) => answer.includes(keyword.toLowerCase()));
 
   return keywordMatches.length >= 2; // Require at least 2 keyword matches
 }

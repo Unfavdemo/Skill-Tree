@@ -24,12 +24,9 @@ Anyone else feel like group projects taught you more about working in tech than 
 
 ---
 
-
-
-
 ---
 
-*Alternative Version (Shorter):*
+_Alternative Version (Shorter):_
 
 🚀 **Just launched SkillTree — an AI-powered career learning platform**
 
@@ -51,7 +48,7 @@ What would you want in a personalized learning platform for your industry? 💭
 
 ---
 
-*Alternative Version (Developer-Focused):*
+_Alternative Version (Developer-Focused):_
 
 🔧 **Built an AI-powered learning platform with React 19 and OpenAI**
 
@@ -77,4 +74,3 @@ Built with accessibility in mind from day one: screen reader support, keyboard n
 What's your take on AI-generated educational content? How would you approach personalized learning at scale?
 
 #React #JavaScript #WebDevelopment #OpenAI #AI #FrontendDevelopment #EdTech #Accessibility #FullStack
-
